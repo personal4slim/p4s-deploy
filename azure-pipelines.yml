@@ -28,8 +28,8 @@ jobs:
     displayName: 'Build .NET Application'
 
   - script: |
-      # Authenticate with Azure Container Registry (ACR)
-      az acr login --name p4s101231 --resource-group p4s-ACR-rg
+      # Authenticate with Azure Container Registry (ACR) using the service connection
+      az acr login --name p4s101231 --service-principal-id <ServicePrincipalID> --service-principal-key <ServicePrincipalKey> --tenant <TenantID>
 
       # Build and push Docker image to ACR
       docker build -t p4s101231.azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
@@ -40,3 +40,7 @@ jobs:
       echo "AZURE_TENANT_ID=104e77d4-81e7-4c16-ab44-935220bed6dd" >> $(HOME)/.bashrc
       echo "AZURE_CLIENT_SECRET=nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9" >> $(HOME)/.bashrc
     displayName: 'Build and Push Docker Image'
+    env:
+      ServicePrincipalID: $(ServicePrincipalID)
+      ServicePrincipalKey: $(ServicePrincipalKey)
+      TenantID: $(TenantID)
