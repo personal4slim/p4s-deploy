@@ -1,45 +1,43 @@
-# azure-pipeline.yml
-
 trigger:
+- main  # Adjust the branch name as needed
+
+pr:
 - '*'
 
-pr: 
-- '*'
+pool:
+  vmImage: 'ubuntu-latest'
 
 jobs:
 - job: Terraform
-  displayName: 'Terraform Deployment'
-  pool:
-    vmImage: 'ubuntu-latest'
-  
   steps:
+  - checkout: self
+
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.x'
       addToPath: true
-    displayName: 'Use Python 3.x'
-  
+
   - script: |
-      # Install Azure CLI
-      curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-      
-      # Log in to Azure using the service connection
-      az login --service-principal -u $(azureServiceConnection.servicePrincipalId) -p $(azureServiceConnection.servicePrincipalKey) --tenant $(azureServiceConnection.tenantId)
-      
-      # Set the Azure subscription
-      az account set --subscription $(azureServiceConnection.subscriptionId)
-      
-      # Change to your Terraform directory
-      cd smalldeploy
-      
-      # Initialize Terraform with reconfigure
-      terraform init -reconfigure -var-file=../azure-credentials.yml
-      terraform plan -var-file=../azure-credentials.yml
-      terraform apply -auto-approve -var-file=../azure-credentials.yml
-    displayName: 'Run Terraform'
-    
+      python -m pip install --upgrade pip
+      pip install requests
+    displayName: 'Install Python dependencies'
+
   - script: |
-      # Clean up and logout
-      cd ..
-      az logout
-    displayName: 'Clean up and Logout'
+      az login --service-principal --tenant $(tenantId) --username $(servicePrincipalId) --password $(servicePrincipalKey)
+      az account set --subscription $(subscriptionId)
+    displayName: 'Azure Login'
+
+  - script: |
+      terraform init -reconfigure
+      git add .
+      git commit -m "Reconfigure Terraform backend"
+      git push origin main  # Use your branch name if it's not 'main'
+    displayName: 'Terraform Init and Push'
+
+  - script: |
+      terraform plan
+    displayName: 'Terraform Plan'
+
+  - script: |
+      terraform apply -auto-approve
+    displayName: 'Terraform Apply'
