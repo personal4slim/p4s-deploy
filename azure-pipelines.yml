@@ -12,37 +12,34 @@ pool:
 extends:
   template: variables.yml  # Reference the variable file
 
-stages:
-- stage: BuildAndPush
+jobs:
+- job: BuildAndPushDockerImage
   displayName: 'Build and Push Docker Image'
-  jobs:
-  - job: BuildAndPushDockerImage
+  steps:
+  - checkout: self
+
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+      installationScript: 'install'
+
+  - script: |
+      # Build .NET application
+      cd $(dockerfilePath)
+      dotnet build
+    displayName: 'Build .NET Application'
+
+  - script: |
+      # Authenticate with Azure Container Registry (ACR)
+      az acr login --name $(acrName) --resource-group $(acrResourceGroup)
+
+      # Build and push Docker image to ACR
+      docker build -t $(acrName).azurecr.io/your-app-name:$(Build.BuildId) -f $(dockerfilePath) .
+      docker push $(acrName).azurecr.io/your-app-name:$(Build.BuildId)
+
+      # Set Azure AD application details as environment variables
+      export AZURE_CLIENT_ID=$appId
+      export AZURE_TENANT_ID=$tenantId
+      export AZURE_CLIENT_SECRET=$secretValue
     displayName: 'Build and Push Docker Image'
-    steps:
-    - checkout: self
-
-    - task: UseDotNet@2
-      inputs:
-        packageType: 'sdk'
-        installationPath: $(Agent.ToolsDirectory)/dotnet
-        installationScript: 'install'
-
-    - script: |
-        # Build .NET application
-        cd $(dockerfilePath)
-        dotnet build
-      displayName: 'Build .NET Application'
-
-    - script: |
-        # Authenticate with Azure Container Registry (ACR)
-        az acr login --name $(acrName) --resource-group $(acrResourceGroup)
-
-        # Build and push Docker image to ACR
-        docker build -t $(acrName).azurecr.io/your-app-name:$(Build.BuildId) -f $(dockerfilePath) .
-        docker push $(acrName).azurecr.io/your-app-name:$(Build.BuildId)
-
-        # Set Azure AD application details as environment variables
-        export AZURE_CLIENT_ID=$appId
-        export AZURE_TENANT_ID=$tenantId
-        export AZURE_CLIENT_SECRET=$secretValue
-      displayName: 'Build and Push Docker Image'
