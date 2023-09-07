@@ -23,7 +23,7 @@ jobs:
 
   - script: |
       # Build .NET application in the 01-Dockerfile directory
-      cd Dockerfile
+      cd 01-Dockerfile
       dotnet build
     displayName: 'Build .NET Application'
 
@@ -36,7 +36,7 @@ jobs:
       docker push p4s101231.azurecr.io/p4s-k8s-image:$(Build.BuildId)
 
       # Set Azure AD application details as environment variables
-      echo "export AZURE_CLIENT_ID=62ba6d2f-4192-4cf5-a00d-42328f7d7dfd" >> $(profile)
-      echo "export AZURE_TENANT_ID=104e77d4-81e7-4c16-ab44-935220bed6dd" >> $(profile)
-      echo "export AZURE_CLIENT_SECRET=nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9" >> $(profile)
+      echo "AZURE_CLIENT_ID=62ba6d2f-4192-4cf5-a00d-42328f7d7dfd" >> $(HOME)/.bashrc
+      echo "AZURE_TENANT_ID=104e77d4-81e7-4c16-ab44-935220bed6dd" >> $(HOME)/.bashrc
+      echo "AZURE_CLIENT_SECRET=nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9" >> $(HOME)/.bashrc
     displayName: 'Build and Push Docker Image'
