@@ -25,11 +25,22 @@ jobs:
   - script: |
       az login --service-principal --tenant $(tenantId) --username $(servicePrincipalId) --password $(servicePrincipalKey)
       az account set --subscription $(subscriptionId)
+    displayName: 'Azure Login'
+
+  - script: |
+      cd p4s-deploy/smalldeploy  # Change to the correct directory
       terraform init -reconfigure
       git add .
       git commit -m "Reconfigure Terraform backend"
       git push origin main  # Use your branch name if it's not 'main'
-      terraform plan
-      terraform apply -auto-approve
-    displayName: 'Azure Login and Terraform'
+    displayName: 'Terraform Init and Push'
 
+  - script: |
+      cd p4s-deploy/smalldeploy  # Change to the correct directory
+      terraform plan
+    displayName: 'Terraform Plan'
+
+  - script: |
+      cd p4s-deploy/smalldeploy  # Change to the correct directory
+      terraform apply -auto-approve
+    displayName: 'Terraform Apply'
