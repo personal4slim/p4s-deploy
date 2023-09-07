@@ -23,7 +23,7 @@ jobs:
 
   - script: |
       # Build .NET application in the 01-Dockerfile directory
-      cd 01-Dockerfile
+      cd p4s-deploy
       dotnet build
     displayName: 'Build .NET Application'
 
