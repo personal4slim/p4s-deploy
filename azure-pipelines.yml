@@ -11,8 +11,7 @@ pool:
 
 extends:
   template: variables.yml  # Reference the variable file
-
-jobs:
+Jobs:
 - job: BuildAndPushDockerImage
   displayName: 'Build and Push Docker Image'
   steps:
