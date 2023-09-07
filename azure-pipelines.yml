@@ -9,49 +9,8 @@ pool:
 
 variables:
   # Define your Azure Container Registry (ACR) details
-  acrName: 'trigger:
-- main  # Adjust the branch name as needed
-
-pr:
-- '*'
-
-pool:
-  vmImage: 'ubuntu-latest'
-
-variables:
-  # Define your Azure Container Registry (ACR) details
   acrName: 'your-acr-name'  # Replace with your ACR name
   acrResourceGroup: 'p4s-ACR-rg'  # Replace with your ACR resource group name
-  dockerfilePath: 'p4s-deploy/01-Dockerfile'  # Path to your Dockerfile
-
-jobs:
-- job: BuildAndPushDockerImage
-  displayName: 'Build and Push Docker Image'
-  steps:
-  - checkout: self
-
-  - task: UseDotNet@2
-    inputs:
-      packageType: 'sdk'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
-      installationScript: 'install'
-
-  - script: |
-      # Build .NET application
-      cd $(dockerfilePath)
-      dotnet build
-    displayName: 'Build .NET Application'
-
-  - script: |
-      # Authenticate with Azure Container Registry (ACR)
-      az acr login --name $(acrName) --resource-group $(acrResourceGroup)
-      
-      # Build and push Docker image to ACR
-      docker build -t $(acrName).azurecr.io/your-app-name:$(Build.BuildId) -f $(dockerfilePath) .
-      docker push $(acrName).azurecr.io/your-app-name:$(Build.BuildId)
-    displayName: 'Build and Push Docker Image'
-'  # Replace with your ACR name
-  acrResourceGroup: 'your-acr-resource-group'  # Replace with your ACR resource group name
   dockerfilePath: 'p4s-deploy/01-Dockerfile'  # Path to your Dockerfile
 
 jobs:
