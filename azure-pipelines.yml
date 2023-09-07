@@ -9,6 +9,17 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  # Define your variables directly here
+  ServicePrincipalID: '<Your_Service_Principal_ID>'
+  ServicePrincipalKey: '<Your_Service_Principal_Key>'
+  TenantID: '<Your_Tenant_ID>'
+  ACRName: 'p4s101231'
+  ACRResourceGroup: 'p4s-ACR-rg'
+  AzureClientID: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'
+  AzureTenantID: '104e77d4-81e7-4c16-ab44-935220bed6dd'
+  AzureClientSecret: 'nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9'
+
 jobs:
 - job: BuildAndPushDockerImage
   displayName: 'Build and Push Docker Image'
@@ -22,27 +33,21 @@ jobs:
       installationScript: 'install'
 
   - script: |
-      # Load environment variables from the variables.yml file
-      source "$(System.DefaultWorkingDirectory)/variables.yml"  # Adjust the path as needed
-
       # Build .NET application in the 01-Dockerfile directory
       cd 01-Dockerfile
       dotnet build
     displayName: 'Build .NET Application'
 
   - script: |
-      # Load environment variables from the variables.yml file
-      source "$(System.DefaultWorkingDirectory)/variables.yml"  # Adjust the path as needed
-
       # Authenticate with Azure Container Registry (ACR) using the service connection
-      az acr login --name $ACRName --username $ServicePrincipalID --password $ServicePrincipalKey
+      az acr login --name $(ACRName) --username $(ServicePrincipalID) --password $(ServicePrincipalKey)
 
       # Build and push Docker image to ACR
-      docker build -t $ACRName.azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
-      docker push $ACRName.azurecr.io/p4s-k8s-image:$(Build.BuildId)
+      docker build -t $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
+      docker push $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId)
 
       # Set Azure AD application details as environment variables
-      echo "AZURE_CLIENT_ID=$AzureClientID" >> $(HOME)/.bashrc
-      echo "AZURE_TENANT_ID=$AzureTenantID" >> $(HOME)/.bashrc
-      echo "AZURE_CLIENT_SECRET=$AzureClientSecret" >> $(HOME)/.bashrc
+      echo "AZURE_CLIENT_ID=$(AzureClientID)" >> $(HOME)/.bashrc
+      echo "AZURE_TENANT_ID=$(AzureTenantID)" >> $(HOME)/.bashrc
+      echo "AZURE_CLIENT_SECRET=$(AzureClientSecret)" >> $(HOME)/.bashrc
     displayName: 'Build and Push Docker Image'
