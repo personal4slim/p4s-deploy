@@ -23,7 +23,7 @@ jobs:
 
   - script: |
       # Load environment variables from the variables.yml file
-      source variables.yml
+      source $(System.DefaultWorkingDirectory)/variables.yml
 
       # Build .NET application in the 01-Dockerfile directory
       cd 01-Dockerfile
@@ -32,7 +32,7 @@ jobs:
 
   - script: |
       # Load environment variables from the variables.yml file
-      source variables.yml
+      source $(System.DefaultWorkingDirectory)/variables.yml
 
       # Authenticate with Azure Container Registry (ACR) using the service connection
       az acr login --name $ACRName --username $ServicePrincipalID --password $ServicePrincipalKey
