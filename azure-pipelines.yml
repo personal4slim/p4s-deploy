@@ -1,33 +1,32 @@
 trigger:
-- main  # This specifies when the pipeline should trigger, e.g., when commits are pushed to the 'main' branch.
+- '*'
+
+pr:
+- '*'
 
 pool:
-  vmImage: 'ubuntu-latest'  # You can choose the desired VM image based on your requirements.
+  vmImage: 'ubuntu-latest'
 
-steps:
-- script: |
-    # Navigate to the 'smalldeploy' directory.
-    cd smalldeploy
+stages:
+- stage: TerraformDeployment
+  jobs:
+  - job: RunTerraform
+    displayName: 'Run Terraform'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.x'
+        addToPath: true
 
-    # Initialize Terraform in the directory.
-    terraform init
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'runtime'
+        version: '3.x'
 
-  displayName: 'Terraform Init'
-
-- script: |
-    # Navigate to the 'smalldeploy' directory.
-    cd smalldeploy
-
-    # Perform a Terraform plan.
-    terraform plan -out=tfplan
-
-  displayName: 'Terraform Plan'
-
-- script: |
-    # Navigate to the 'smalldeploy' directory.
-    cd smalldeploy
-
-    # Apply the Terraform plan.
-    terraform apply tfplan
-
-  displayName: 'Terraform Apply'
+    - script: |
+        az login --service-principal --username "$(servicePrincipalId)" --password "$(servicePrincipalKey)" --tenant "$(tenantId)"
+        cd smalldeploy  # Navigate to the folder containing your Terraform code
+        terraform init
+        terraform plan
+        terraform apply -auto-approve
+      displayName: 'Terraform Init, Plan, and Apply'
