@@ -11,7 +11,7 @@ variables:
   # Define your Azure Container Registry (ACR) details
   acrName: 'your-acr-name'  # Replace with your ACR name
   acrResourceGroup: 'p4s-ACR-rg'  # Replace with your ACR resource group name
-  dockerfilePath: 'personal4slim/01-Dockerfile/'  # Path to your Dockerfile
+  dockerfilePath: 'personal4slim/p4s-deploy/01-Dockerfile/'  # Path to your Dockerfile
 
 jobs:
 - job: BuildAndPushDockerImage
