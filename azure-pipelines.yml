@@ -11,9 +11,9 @@ pool:
 
 variables:
   # Define your variables directly here
-  ServicePrincipalID: '<Your_Service_Principal_ID>'
-  ServicePrincipalKey: '<Your_Service_Principal_Key>'
-  TenantID: '<Your_Tenant_ID>'
+  ServicePrincipalID: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'
+  ServicePrincipalKey: 'nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9'
+  TenantID: '104e77d4-81e7-4c16-ab44-935220bed6dd'
   ACRName: 'p4s101231'
   ACRResourceGroup: 'p4s-ACR-rg'
   AzureClientID: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'
