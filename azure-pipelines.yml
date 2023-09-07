@@ -28,7 +28,7 @@ jobs:
     displayName: 'Azure Login'
 
   - script: |
-      cd p4s-deploy/smalldeploy  # Change to the correct directory
+      cd p4s-deploy/smalldeploy
       terraform init -reconfigure
       git add .
       git commit -m "Reconfigure Terraform backend"
@@ -36,11 +36,11 @@ jobs:
     displayName: 'Terraform Init and Push'
 
   - script: |
-      cd p4s-deploy/smalldeploy  # Change to the correct directory
+      cd p4s-deploy/smalldeploy
       terraform plan
     displayName: 'Terraform Plan'
 
   - script: |
-      cd p4s-deploy/smalldeploy  # Change to the correct directory
+      cd p4s-deploy/smalldeploy
       terraform apply -auto-approve
     displayName: 'Terraform Apply'
