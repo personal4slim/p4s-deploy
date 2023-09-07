@@ -22,8 +22,8 @@ jobs:
       installationScript: 'install'
 
   - script: |
-      # Build .NET application
-      cd MyDotNetApp  # Replace with the actual path to your .NET project
+      # Build .NET application in the 01-Dockerfile directory
+      cd 01-Dockerfile
       dotnet build
     displayName: 'Build .NET Application'
 
