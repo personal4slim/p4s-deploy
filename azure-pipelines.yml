@@ -9,9 +9,6 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
-extends:
-  template: variables.yml  # Reference the variable file
-
 jobs:
 - job: BuildAndPushDockerImage
   displayName: 'Build and Push Docker Image'
@@ -32,7 +29,7 @@ jobs:
 
   - script: |
       # Authenticate with Azure Container Registry (ACR) using the service connection
-      az acr login --name $(ACRName) --service-principal-id $(ServicePrincipalID) --service-principal-key $(ServicePrincipalKey) --tenant $(TenantID)
+      az acr login --name $(ACRName) --username $(ServicePrincipalID) --password $(ServicePrincipalKey)
 
       # Build and push Docker image to ACR
       docker build -t $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
