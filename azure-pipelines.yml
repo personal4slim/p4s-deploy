@@ -9,9 +9,9 @@ pool:
 
 variables:
   # Define your Azure Container Registry (ACR) details
-  acrName: 'your-acr-name'  # Replace with your ACR name
+  acrName: 'p4s101231'  # Replace with your ACR name
   acrResourceGroup: 'p4s-ACR-rg'  # Replace with your ACR resource group name
-  dockerfilePath: 'personal4slim/p4s-deploy/01-Dockerfile/'  # Path to your Dockerfile
+  dockerfilePath: 'p4s-deploy/01-Dockerfile'  # Path to your Dockerfile
 
 jobs:
 - job: BuildAndPushDockerImage
@@ -39,3 +39,4 @@ jobs:
       docker build -t $(acrName).azurecr.io/your-app-name:$(Build.BuildId) -f $(dockerfilePath) .
       docker push $(acrName).azurecr.io/your-app-name:$(Build.BuildId)
     displayName: 'Build and Push Docker Image'
+
