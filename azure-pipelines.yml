@@ -9,6 +9,9 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
+extends:
+  template: variables.yml  # Reference the variable file
+
 jobs:
 - job: BuildAndPushDockerImage
   displayName: 'Build and Push Docker Image'
@@ -29,18 +32,14 @@ jobs:
 
   - script: |
       # Authenticate with Azure Container Registry (ACR) using the service connection
-      az acr login --name p4s101231 --service-principal-id <ServicePrincipalID> --service-principal-key <ServicePrincipalKey> --tenant <TenantID>
+      az acr login --name $(ACRName) --service-principal-id $(ServicePrincipalID) --service-principal-key $(ServicePrincipalKey) --tenant $(TenantID)
 
       # Build and push Docker image to ACR
-      docker build -t p4s101231.azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
-      docker push p4s101231.azurecr.io/p4s-k8s-image:$(Build.BuildId)
+      docker build -t $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
+      docker push $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId)
 
       # Set Azure AD application details as environment variables
-      echo "AZURE_CLIENT_ID=62ba6d2f-4192-4cf5-a00d-42328f7d7dfd" >> $(HOME)/.bashrc
-      echo "AZURE_TENANT_ID=104e77d4-81e7-4c16-ab44-935220bed6dd" >> $(HOME)/.bashrc
-      echo "AZURE_CLIENT_SECRET=nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9" >> $(HOME)/.bashrc
+      echo "AZURE_CLIENT_ID=$(AzureClientID)" >> $(HOME)/.bashrc
+      echo "AZURE_TENANT_ID=$(AzureTenantID)" >> $(HOME)/.bashrc
+      echo "AZURE_CLIENT_SECRET=$(AzureClientSecret)" >> $(HOME)/.bashrc
     displayName: 'Build and Push Docker Image'
-    env:
-      ServicePrincipalID: $(ServicePrincipalID)
-      ServicePrincipalKey: $(ServicePrincipalKey)
-      TenantID: $(TenantID)
