@@ -25,19 +25,11 @@ jobs:
   - script: |
       az login --service-principal --tenant $(tenantId) --username $(servicePrincipalId) --password $(servicePrincipalKey)
       az account set --subscription $(subscriptionId)
-    displayName: 'Azure Login'
-
-  - script: |
       terraform init -reconfigure
       git add .
       git commit -m "Reconfigure Terraform backend"
       git push origin main  # Use your branch name if it's not 'main'
-    displayName: 'Terraform Init and Push'
-
-  - script: |
       terraform plan
-    displayName: 'Terraform Plan'
-
-  - script: |
       terraform apply -auto-approve
-    displayName: 'Terraform Apply'
+    displayName: 'Azure Login and Terraform'
+
