@@ -1,32 +1,45 @@
+# azure-pipeline.yml
+
 trigger:
 - '*'
 
-pr:
+pr: 
 - '*'
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-stages:
-- stage: TerraformDeployment
-  jobs:
-  - job: RunTerraform
+jobs:
+- job: Terraform
+  displayName: 'Terraform Deployment'
+  pool:
+    vmImage: 'ubuntu-latest'
+  
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+    displayName: 'Use Python 3.x'
+  
+  - script: |
+      # Install Azure CLI
+      curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      
+      # Log in to Azure using the service connection
+      az login --service-principal -u $(azureServiceConnection.servicePrincipalId) -p $(azureServiceConnection.servicePrincipalKey) --tenant $(azureServiceConnection.tenantId)
+      
+      # Set the Azure subscription
+      az account set --subscription $(azureServiceConnection.subscriptionId)
+      
+      # Change to your Terraform directory
+      cd smalldeploy
+      
+      # Initialize Terraform with reconfigure
+      terraform init -reconfigure -var-file=../azure-credentials.yml
+      terraform plan -var-file=../azure-credentials.yml
+      terraform apply -auto-approve -var-file=../azure-credentials.yml
     displayName: 'Run Terraform'
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.x'
-        addToPath: true
-
-    - task: UseDotNet@2
-      inputs:
-        packageType: 'runtime'
-        version: '3.x'
-
-    - script: |
-        az login --service-principal --username "$(servicePrincipalId)" --password "$(servicePrincipalKey)" --tenant "$(tenantId)"
-        cd smalldeploy  # Navigate to the folder containing your Terraform code
-        terraform init
-        terraform plan
-        terraform apply -auto-approve
-      displayName: 'Terraform Init, Plan, and Apply'
+    
+  - script: |
+      # Clean up and logout
+      cd ..
+      az logout
+    displayName: 'Clean up and Logout'
