@@ -1,3 +1,5 @@
+# azure-pipeline.yml
+
 trigger:
 - main  # Adjust the branch name as needed
 
@@ -7,19 +9,8 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  # Define your Azure Container Registry (ACR) details
-  acrName: 'p4s101231'  # Replace with your ACR name
-  acrResourceGroup: 'p4s-ACR-rg'  # Replace with your ACR resource group name
-  dockerfilePath: '01-Dockerfile'  # Path to your Dockerfile
-
-  # Azure AD application details
-  appId: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'  # Application (client) ID
-  objectId: 'e3cc12ae-4da8-4aa1-b0da-1bb9e4a682b5'  # Object ID
-  tenantId: '104e77d4-81e7-4c16-ab44-935220bed6dd'  # Directory (tenant) ID
-  subscriptionId: '606e824b-aaf7-4b4e-9057-b459f6a4436d'  # Subscription ID
-  secretId: '7f7f47ce-e23b-4034-90da-0823fa454b18'  # Secret ID
-  secretValue: 'nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9'  # Secret Value
+extends:
+  template: variables.yml  # Reference the variable file
 
 jobs:
 - job: BuildAndPushDockerImage
