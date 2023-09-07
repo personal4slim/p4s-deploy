@@ -1,0 +1,42 @@
+trigger:
+- main  # Replace with the branch name you want to trigger on
+
+pr:
+- '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+  clean: true
+
+- script: |
+    # Set the repository URL and folder path
+    repoURL="<repository_url>"
+    folderPath="smalldeploy"
+    
+    # Clone the repository and checkout the specific folder
+    git clone $(repoURL) temp_repo
+    cd temp_repo
+    git checkout $(Build.SourceBranch)
+    
+    # Copy the folder to the staging directory
+    cp -r $folderPath $(Build.ArtifactStagingDirectory)/smalldeploy
+
+    # List the contents of the copied folder for verification
+    ls $(Build.ArtifactStagingDirectory)/smalldeploy
+  displayName: 'Clone and Copy Folder'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)/smalldeploy'
+    artifact: 'smalldeploy'
+    publishLocation: 'pipeline'
+  displayName: 'Publish Artifact'
+
+- script: |
+    # Clean up the temporary repository
+    rm -rf temp_repo
+  displayName: 'Clean Up'
+
