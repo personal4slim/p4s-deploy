@@ -11,7 +11,8 @@ pool:
 
 extends:
   template: azure-pipelines.yml  # Reference the variable file
-Jobs:
+
+jobs:  # Corrected from 'Jobs' to 'jobs'
 - job: BuildAndPushDockerImage
   displayName: 'Build and Push Docker Image'
   steps:
