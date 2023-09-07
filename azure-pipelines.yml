@@ -33,12 +33,17 @@ jobs:
       installationScript: 'install'
 
   - script: |
-      # Build .NET application in the 01-Dockerfile directory
+      # Change working directory to 01-Dockerfile
       cd 01-Dockerfile
+
+      # Build .NET application in the 01-Dockerfile directory
       dotnet build
     displayName: 'Build .NET Application'
 
   - script: |
+      # Change working directory to 01-Dockerfile
+      cd 01-Dockerfile
+
       # Authenticate with Azure Container Registry (ACR) using the service connection
       az acr login --name $(ACRName) --username $(ServicePrincipalID) --password $(ServicePrincipalKey)
 
