@@ -1,0 +1,33 @@
+trigger:
+- main  # This specifies when the pipeline should trigger, e.g., when commits are pushed to the 'main' branch.
+
+pool:
+  vmImage: 'ubuntu-latest'  # You can choose the desired VM image based on your requirements.
+
+steps:
+- script: |
+    # Navigate to the 'smalldeploy' directory.
+    cd smalldeploy
+
+    # Initialize Terraform in the directory.
+    terraform init
+
+  displayName: 'Terraform Init'
+
+- script: |
+    # Navigate to the 'smalldeploy' directory.
+    cd smalldeploy
+
+    # Perform a Terraform plan.
+    terraform plan -out=tfplan
+
+  displayName: 'Terraform Plan'
+
+- script: |
+    # Navigate to the 'smalldeploy' directory.
+    cd smalldeploy
+
+    # Apply the Terraform plan.
+    terraform apply tfplan
+
+  displayName: 'Terraform Apply'
