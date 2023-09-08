@@ -16,9 +16,19 @@ jobs:
   steps:
   - checkout: self
 
-  - task: UseTerraform@0  # Use the correct version number based on the installed version
+  - task: UsePythonVersion@0
     inputs:
-      terraformVersion: 'latest'  # Use the latest Terraform version
+      versionSpec: '3.x'
+      addToPath: true
+
+  - script: |
+      curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+      echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+      sudo apt-get update && sudo apt-get install terraform
+    displayName: 'Install Terraform'
+
+  - script: terraform --version
+    displayName: 'Terraform Version'
 
   - task: AzureCLI@2
     inputs:
