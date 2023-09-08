@@ -36,11 +36,11 @@ jobs:
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: 'az account show'
-      - script: |
-    cd C:\Users\Consultant\armstorageacc\smalldeploy\.terraform\providers\registry.terraform.io
-    terraform init
-  displayName: 'Initialize Terraform'
 
+  - script: |
+      cd C:\Users\Consultant\armstorageacc\smalldeploy\.terraform\providers\registry.terraform.io
+      terraform init
+    displayName: 'Initialize Terraform'
 
   - script: terraform init
     displayName: 'Initialize Terraform'
