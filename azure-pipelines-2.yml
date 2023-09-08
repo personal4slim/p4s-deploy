@@ -48,6 +48,15 @@ jobs:
       - script: terraform plan -out=tfplan -destroy
         displayName: 'Plan Terraform (with destruction)'
 
+      - script: |
+          if [ -d "/home/vsts/work/1/s/.terraform" ]; then
+            echo "Terraform directory exists, publishing artifact..."
+          else
+            echo "Terraform directory does not exist, skipping artifact publish."
+            exit 1
+          fi
+        displayName: 'Check Terraform Directory'
+
       - script: terraform apply -auto-approve tfplan
         displayName: 'Apply Terraform'
 
