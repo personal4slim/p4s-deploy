@@ -1,0 +1,27 @@
+trigger:
+- '*'
+
+pr:
+- '*'
+
+pr:
+- '*'
+
+jobs:
+- job: BuildDockerImage
+  displayName: 'Build Docker Image'
+  pool:
+    vmImage: 'ubuntu-latest'
+    
+  steps:
+  - checkout: self
+    
+  - script: |
+      docker build -t my-docker-image:latest .
+      docker push my-docker-image:latest
+    displayName: 'Build and Push Docker Image'
+    
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/docker-manifest'
+      artifact: 'docker-manifest'
