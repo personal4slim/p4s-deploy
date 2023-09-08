@@ -13,6 +13,10 @@ jobs:
   - checkout: self
 
   - script: |
+      # Create the Kubernetes manifest directory if it doesn't exist
+      mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
+
+      # Generate the Kubernetes manifest file
       cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/kubernetes-manifest.yaml
       apiVersion: apps/v1
       kind: Deployment
