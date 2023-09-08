@@ -1,40 +1,42 @@
+name: Deploy Kubernetes Cluster
+
 trigger:
-- main  # Replace with your target branch
+  branches:
+    exclude:
+      - '*'  # Replace with your branch exclusion pattern
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-resources:
-  repositories:
-  - repository: self
-    connections:
-      - serviceConnection: 'cluster1'  # Replace with the name of your service connection
-        source: p4s-deploy  # Replace with the name of your GitHub repository
+pr:
+- '*'
 
 jobs:
 - job: deploy
+  pool:
+    vmImage: 'ubuntu-latest'
+
   steps:
   - checkout: self
 
-  - task: UsePythonVersion@0
+  - task: UseTerraform@0  # Use the correct version number based on the installed version
     inputs:
-      versionSpec: '3.x'
-      addToPath: true
+      terraformVersion: 'latest'  # Use the latest Terraform version
 
-  - task: UseTerraform@2
+  - task: AzureCLI@2
     inputs:
-      terraformVersion: 'latest'
+      azureSubscription: 'cluster1'  # Use your service connection name
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: 'az account show'
 
-  - script: |
-      terraform init
-      terraform plan -out=tfplan
-    displayName: 'Initialize and Plan Terraform'
+  - script: terraform init
+    displayName: 'Initialize Terraform'
 
-  - script: |
-      terraform apply -auto-approve tfplan
+  - script: terraform plan -out=tfplan
+    displayName: 'Plan Terraform'
+
+  - script: terraform apply -auto-approve tfplan
     displayName: 'Apply Terraform'
 
-  - task: PublishBuildArtifacts@1
+  - task: PublishPipelineArtifact@1
     inputs:
-      pathToPublish: .terraform
-      artifactName: 'terraform-output'
+      targetPath: '$(System.DefaultWorkingDirectory)/.terraform'
+      artifact: 'terraform-output'
