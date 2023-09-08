@@ -13,7 +13,7 @@ jobs:
   - checkout: self
 
   - script: |
-      cat <<EOF > kubernetes-manifest.yaml
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest.yaml
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -56,5 +56,5 @@ jobs:
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest.yaml'
+      targetPath: '$(Build.ArtifactStagingDirectory)'
       artifact: 'kubernetes-manifest'
