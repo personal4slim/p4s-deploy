@@ -1,39 +1,40 @@
-name: Deploy Kubernetes Cluster
+trigger:
+- main  # Replace with your target branch
 
-on:
-  push:
-    branches:
-      - main  # Replace with your target branch
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  repositories:
+  - repository: self
+    connections:
+      - serviceConnection: 'cluster1'  # Replace with the name of your service connection
+        source: p4s-deploy  # Replace with the name of your GitHub repository
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+- job: deploy
+  steps:
+  - checkout: self
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: latest  # Use the latest Terraform version
+  - task: UseTerraform@2
+    inputs:
+      terraformVersion: 'latest'
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_SERVICE_CONNECTION_CLUSTER1 }}
+  - script: |
+      terraform init
+      terraform plan -out=tfplan
+    displayName: 'Initialize and Plan Terraform'
 
-      - name: Initialize Terraform
-        run: terraform init
+  - script: |
+      terraform apply -auto-approve tfplan
+    displayName: 'Apply Terraform'
 
-      - name: Plan Terraform
-        run: terraform plan -out=tfplan
-
-      - name: Apply Terraform
-        run: terraform apply -auto-approve tfplan
-
-      - name: Create Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: terraform-output
-          path: .terraform
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: .terraform
+      artifactName: 'terraform-output'
