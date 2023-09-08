@@ -1,60 +1,46 @@
-trigger:
-- '*'
-
-pr:
-- '*'
-
-pool:
-  vmImage: 'ubuntu-latest'
-
-jobs:
-- job: deploy
-  steps:
-  - checkout: self
-
-  - script: |
-      cat <<EOF > kubernetes-manifest.yaml
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: my-app
-      spec:
-        replicas: 3
-        selector:
-          matchLabels:
-            app: my-app
-        template:
-          metadata:
-            labels:
-              app: my-app
-          spec:
-            containers:
-              - name: my-app
-                image: p4s-k8s-image
-                ports:
-                  - containerPort: 8080
-                env:
-                  - name: ASPNETCORE_ENVIRONMENT
-                    value: Production
-                  - name: CONNECTION_STRING
-                    value: "your_database_connection_string"
-      ---
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: my-app-service
-      spec:
-        selector:
+- script: |
+    cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest.yaml
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: my-app
+    spec:
+      replicas: 3
+      selector:
+        matchLabels:
           app: my-app
-        ports:
-          - protocol: TCP
-            port: 80
-            targetPort: 8080
-        type: LoadBalancer
-      EOF
-    displayName: 'Create Kubernetes Manifest'
+      template:
+        metadata:
+          labels:
+            app: my-app
+        spec:
+          containers:
+            - name: my-app
+              image: p4s-k8s-image
+              ports:
+                - containerPort: 8080
+              env:
+                - name: ASPNETCORE_ENVIRONMENT
+                  value: Production
+                - name: CONNECTION_STRING
+                  value: "your_database_connection_string"
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: my-app-service
+    spec:
+      selector:
+        app: my-app
+      ports:
+        - protocol: TCP
+          port: 80
+          targetPort: 8080
+      type: LoadBalancer
+    EOF
+  displayName: 'Create Kubernetes Manifest'
 
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)'
-      artifact: 'kubernetes-manifest'
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest.yaml'
+    artifact: 'kubernetes-manifest'
