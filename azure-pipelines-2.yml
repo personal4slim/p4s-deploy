@@ -45,8 +45,8 @@ jobs:
         terraform init
       displayName: 'Initialize Terraform'
 
-    - script: terraform plan -out=tfplan
-      displayName: 'Plan Terraform'
+    - script: terraform plan -out=tfplan -destroy
+      displayName: 'Plan Terraform (Destroy)'
 
     - script: terraform apply -auto-approve tfplan
       displayName: 'Apply Terraform'
