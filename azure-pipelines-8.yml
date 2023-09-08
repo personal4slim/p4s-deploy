@@ -1,0 +1,34 @@
+trigger:
+- '*'
+
+pr:
+- '*'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  servicePrincipalId: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'
+  servicePrincipalKey: 'nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9'
+  tenantId: '104e77d4-81e7-4c16-ab44-935220bed6dd'
+  subscriptionId: '606e824b-aaf7-4b4e-9057-b459f6a4436d'
+  acrName: 'p4s101231'  # Replace with your ACR name
+  imageName: 'p4s-k8s-image'  # Replace with your image name (e.g., myimage:v1)
+  manifestPath: '$(Build.ArtifactStagingDirectory)/manifest.yaml'  # Path to store the manifest artifact
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+
+- script: |
+    az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
+    az acr login --name $(acrName)
+    az acr repository show-manifests --name $(acrName) --repository $(imageName) --output table > $(manifestPath)
+  displayName: 'Pull Image Manifests from ACR'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(manifestPath)'
+    artifact: 'acr-manifest'
