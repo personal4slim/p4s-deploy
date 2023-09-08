@@ -1,5 +1,5 @@
 trigger:
-- main  # Replace with the branch name you want to trigger on
+- main  # Replace with the branch name you want to trigger on.
 
 pr:
 - '*'
