@@ -32,16 +32,13 @@ jobs:
 
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'cluster1'  # Use your service connection name
+        azureSubscription: 'AzureTraining'  # Use your Azure subscription name
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
-        inlineScript: 'az account show'
+        inlineScript: |
+          az login --service-principal -u 62ba6d2f-4192-4cf5-a00d-42328f7d7dfd -p nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9 --tenant 104e77d4-81e7-4c16-ab44-935220bed6dd
 
     - script: |
-        # Clone your GitHub repository
-        git clone https://github.com/personal4slim/p4s-deploy.git
-        cd p4s-deploy/smalldeploy
-        
         # Create the Terraform directory path
         mkdir -p .terraform
         
@@ -49,23 +46,13 @@ jobs:
         terraform init
       displayName: 'Initialize Terraform'
 
-    - script: |
-        # Use the Terraform configuration directory
-        cd p4s-deploy/smalldeploy
-        
-        # Plan Terraform
-        terraform plan -out=tfplan -destroy
+    - script: terraform plan -out=tfplan -destroy
       displayName: 'Plan Terraform (Destroy)'
 
-    - script: |
-        # Use the Terraform configuration directory
-        cd p4s-deploy/smalldeploy
-        
-        # Apply Terraform
-        terraform apply -auto-approve tfplan
+    - script: terraform apply -auto-approve tfplan
       displayName: 'Apply Terraform'
 
     - task: PublishPipelineArtifact@1
       inputs:
-        targetPath: '$(System.DefaultWorkingDirectory)/p4s-deploy/smalldeploy/.terraform'
+        targetPath: '$(System.DefaultWorkingDirectory)/.terraform'
         artifact: 'terraform-output'
