@@ -38,6 +38,10 @@ jobs:
         inlineScript: 'az account show'
 
     - script: |
+        # Clone your GitHub repository
+        git clone https://github.com/personal4slim/p4s-deploy.git
+        cd p4s-deploy/smalldeploy
+        
         # Create the Terraform directory path
         mkdir -p .terraform
         
@@ -45,13 +49,23 @@ jobs:
         terraform init
       displayName: 'Initialize Terraform'
 
-    - script: terraform plan -out=tfplan -destroy
+    - script: |
+        # Use the Terraform configuration directory
+        cd p4s-deploy/smalldeploy
+        
+        # Plan Terraform
+        terraform plan -out=tfplan -destroy
       displayName: 'Plan Terraform (Destroy)'
 
-    - script: terraform apply -auto-approve tfplan
+    - script: |
+        # Use the Terraform configuration directory
+        cd p4s-deploy/smalldeploy
+        
+        # Apply Terraform
+        terraform apply -auto-approve tfplan
       displayName: 'Apply Terraform'
 
     - task: PublishPipelineArtifact@1
       inputs:
-        targetPath: '$(System.DefaultWorkingDirectory)/.terraform'
+        targetPath: '$(System.DefaultWorkingDirectory)/p4s-deploy/smalldeploy/.terraform'
         artifact: 'terraform-output'
