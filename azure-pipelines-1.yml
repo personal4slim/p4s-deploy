@@ -60,5 +60,5 @@ jobs:
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: 'C:\Users\Consultant\armstorageacc\smalldeploy\p4s-deploy'
+      targetPath: 'C:\Users\Consultant\p4s-deploy'
       artifact: 'kubernetes-manifest'
