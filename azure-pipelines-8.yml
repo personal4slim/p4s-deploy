@@ -13,7 +13,7 @@ variables:
   tenantId: '104e77d4-81e7-4c16-ab44-935220bed6dd'
   subscriptionId: '606e824b-aaf7-4b4e-9057-b459f6a4436d'
   acrName: 'p4s101231'  # Replace with your ACR name
-  imageName: 'my-web-app-image'  # Replace with your image name (e.g., myimage:v1)
+  imageName: 'p4s-k8s-image:latest'  # Specify the correct repository and tag
   manifestPath: '$(Build.ArtifactStagingDirectory)/manifest.yaml'  # Path to store the manifest artifact
 
 steps:
