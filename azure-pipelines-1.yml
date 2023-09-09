@@ -1,5 +1,5 @@
 trigger:
-- main  # Replace with the branch name you want to trigger on.
+- '*'
 
 pr:
 - '*'
@@ -7,36 +7,58 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- checkout: self
-  clean: true
+jobs:
+- job: deploy
+  steps:
+  - checkout: self
 
-- script: |
-    # Set the repository URL and folder path
-    repoURL="<repository_url>"
-    folderPath="smalldeploy"
-    
-    # Clone the repository and checkout the specific folder
-    git clone $(repoURL) temp_repo
-    cd temp_repo
-    git checkout $(Build.SourceBranch)
-    
-    # Copy the folder to the staging directory
-    cp -r $folderPath $(Build.ArtifactStagingDirectory)/smalldeploy
+  - script: |
+      # Create the Kubernetes manifest directory if it doesn't exist
+      mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
 
-    # List the contents of the copied folder for verification
-    ls $(Build.ArtifactStagingDirectory)/smalldeploy
-  displayName: 'Clone and Copy Folder'
+      # Generate the Kubernetes manifest file
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/kubernetes-manifest.yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s-k8s-image
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_database_connection_string"
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
+    displayName: 'Create Kubernetes Manifest'
 
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Build.ArtifactStagingDirectory)/smalldeploy'
-    artifact: 'smalldeploy'
-    publishLocation: 'pipeline'
-  displayName: 'Publish Artifact'
-
-- script: |
-    # Clean up the temporary repository
-    rm -rf temp_repo
-  displayName: 'Clean Up'
-
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'C:\Users\Consultant\armstorageacc\smalldeploy\p4s-deploy'
+      artifact: 'kubernetes-manifest'
