@@ -60,5 +60,5 @@ jobs:
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
+      targetPath: 'C:\Users\Consultant\p4s-deploy'
       artifact: 'kubernetes-manifest'
