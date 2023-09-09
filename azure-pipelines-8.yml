@@ -24,7 +24,7 @@ steps:
 
 - script: |
     az login --service-principal -u $(servicePrincipalId) -p $(servicePrincipalKey) --tenant $(tenantId)
-    az acr login --name $(acrName)
+    az acr login --name $(acrName) --service-principal -u $(p4s-c-capstone.ServicePrincipalId) -p $(p4s-c-capstone.ServicePrincipalKey) --tenant $(p4s-c-capstone.TenantId)
     az acr repository show-manifests --name $(acrName) --repository $(imageName) --output table > $(manifestPath)
   displayName: 'Pull Image Manifests from ACR'
 
