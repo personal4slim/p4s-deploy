@@ -24,9 +24,10 @@ stages:
         Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
 
         # Generate the Kubernetes manifest files with a unique identifier based on the build number
-        cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
-        # ... (Your dev manifest content)
-        EOF
+        |
+          cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
+          # ... (Your dev manifest content)
+          EOF
       displayName: 'Create Kubernetes Manifest'
 
     - task: PublishPipelineArtifact@1
@@ -60,9 +61,10 @@ stages:
         Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
 
         # Generate the Kubernetes manifest files with a unique identifier based on the build number
-        cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
-        # ... (Your test manifest content)
-        EOF
+        |
+          cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
+          # ... (Your test manifest content)
+          EOF
       displayName: 'Create Kubernetes Manifest'
 
     - task: PublishPipelineArtifact@1
@@ -96,9 +98,10 @@ stages:
         Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
 
         # Generate the Kubernetes manifest files with a unique identifier based on the build number
-        cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
-        # ... (Your prod manifest content)
-        EOF
+        |
+          cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
+          # ... (Your prod manifest content)
+          EOF
       displayName: 'Create Kubernetes Manifest'
 
     - task: PublishPipelineArtifact@1
@@ -111,4 +114,6 @@ stages:
         connectionType: 'Kubernetes Service Connection'
         kubernetesServiceEndpoint: 'Prod-Kube-Connection'  # Use the correct service connection name for prod
         namespace: 'prod'
-      displayName: 'Use Kubectl
+      displayName: 'Use Kubectl for Prod'
+
+    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-
