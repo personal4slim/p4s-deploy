@@ -18,6 +18,9 @@ jobs:
       # Create the Kubernetes manifest directory if it doesn't exist
       mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
 
+      # Remove old Kubernetes manifest files (keep the latest 5)
+      Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
+
       # Generate the Kubernetes manifest files with a unique identifier based on the build number
       cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
       apiVersion: apps/v1
@@ -61,8 +64,89 @@ jobs:
         type: LoadBalancer
       EOF
 
-      # ... (Repeat similar sections for test and prod)
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: test
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_database_connection_string"
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: test
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
 
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: prod
+      spec:
+        replicas: 5
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_database_connection_string"
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: prod
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
     displayName: 'Create Kubernetes Manifest'
 
   - task: PublishPipelineArtifact@1
@@ -70,39 +154,38 @@ jobs:
       targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
       artifact: 'kubernetes-manifest'
 
-# Deployment stages for dev, test, and prod
 - stage: DeployToDev
   jobs:
-  - job: Deploy
+  - job: DeployDev
     steps:
-    - script: |
-        # Delete previous Kubernetes manifest files in the target namespace
-        kubectl delete -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml --ignore-not-found=true
-
-        # Apply the new Kubernetes manifest
-        kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
-      displayName: 'Deploy to Dev'
+    - task: UseKubectl@1
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'Dev-Kube-Connection'  # Use the correct service connection name for dev
+        namespace: 'dev'
+    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
+    displayName: 'Deploy to Dev'
 
 - stage: DeployToTest
   jobs:
-  - job: Deploy
+  - job: DeployTest
     steps:
-    - script: |
-        # Delete previous Kubernetes manifest files in the target namespace
-        kubectl delete -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml --ignore-not-found=true
-
-        # Apply the new Kubernetes manifest
-        kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
-      displayName: 'Deploy to Test'
+    - task: UseKubectl@1
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'Test-Kube-Connection'  # Use the correct service connection name for test
+        namespace: 'test'
+    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
+    displayName: 'Deploy to Test'
 
 - stage: DeployToProd
   jobs:
-  - job: Deploy
+  - job: DeployProd
     steps:
-    - script: |
-        # Delete previous Kubernetes manifest files in the target namespace
-        kubectl delete -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml --ignore-not-found=true
-
-        # Apply the new Kubernetes manifest
-        kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
-      displayName: 'Deploy to Prod'
+    - task: UseKubectl@1
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'Prod-Kube-Connection'  # Use the correct service connection name for prod
+        namespace: 'prod'
+    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
+    displayName: 'Deploy to Prod'
