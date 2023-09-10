@@ -28,48 +28,48 @@ jobs:
         local connection_string="$3"
 
         cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/${env}-manifest-$(Build.BuildNumber).yaml
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: my-app
-          namespace: $env
-        spec:
-          replicas: $replicas
-          selector:
-            matchLabels:
-              app: my-app
-          template:
-            metadata:
-              labels:
-                app: my-app
-            spec:
-              containers:
-                - name: my-app
-                  image: p4s101231.azurecr.io/p4s-k8s-image:latest
-                  ports:
-                    - containerPort: 8080
-                  env:
-                    - name: ASPNETCORE_ENVIRONMENT
-                      value: Production
-                    - name: CONNECTION_STRING
-                      value: "$connection_string"
-              imagePullSecrets:
-                - name: acr-secret
-        ---
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: my-app-service
-          namespace: $env
-        spec:
-          selector:
-            app: my-app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  namespace: $env
+spec:
+  replicas: $replicas
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: p4s101231.azurecr.io/p4s-k8s-image:latest
           ports:
-            - protocol: TCP
-              port: 80
-              targetPort: 8080
-          type: LoadBalancer
-        EOF
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: CONNECTION_STRING
+              value: "$connection_string"
+      imagePullSecrets:
+        - name: acr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+  namespace: $env
+spec:
+  selector:
+    app: my-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+EOF
       }
 
       # Generate manifests for each environment
