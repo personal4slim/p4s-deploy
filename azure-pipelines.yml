@@ -85,7 +85,7 @@ jobs:
   - task: Docker@2
     displayName: 'Build and Push Docker Image'
     inputs:
-      containerRegistry: 'Your-ACR-Service-Connection' # Replace with your ACR service connection
+      containerRegistry: 'ACR connection' # Replace with your ACR service connection
       repository: 'p4s-k8s-image'
       command: 'buildAndPush'
       Dockerfile: '**/Dockerfile'
