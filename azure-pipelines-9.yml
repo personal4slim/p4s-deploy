@@ -9,6 +9,8 @@ pool:
 
 jobs:
 - job: deploy
+  timeoutInMinutes: 20 # Increased timeout to 20 minutes
+
   steps:
   - checkout: self
 
@@ -23,7 +25,7 @@ jobs:
       metadata:
         name: my-app
       spec:
-        replicas: 3
+        replicas: 1  # Reduced replicas to 1
         selector:
           matchLabels:
             app: my-app
@@ -34,7 +36,7 @@ jobs:
           spec:
             containers:
               - name: my-app
-                image: p4s-k8s-image
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest  # Updated image reference
                 ports:
                   - containerPort: 8080
                 env:
@@ -61,4 +63,6 @@ jobs:
   - task: PublishPipelineArtifact@1
     inputs:
       targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
-      artifact: 'kubernetes-manifest' 
+      artifact: 'kubernetes-manifest'
+
+  # Add your deployment steps here if needed
