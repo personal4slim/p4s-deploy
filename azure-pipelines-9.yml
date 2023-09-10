@@ -18,8 +18,11 @@ jobs:
       # Create the Kubernetes manifest directory if it doesn't exist
       mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
 
-      # Generate the Kubernetes manifest file
-      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/kubernetes-manifest.yaml
+      # Remove old Kubernetes manifest files (keep the latest 5)
+      Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
+
+      # Generate the Kubernetes manifest file with a unique identifier based on the build number
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/kubernetes-manifest-$(Build.BuildNumber).yaml
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -64,5 +67,3 @@ jobs:
     inputs:
       targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
       artifact: 'kubernetes-manifest'
-
-  # Add your deployment steps here if needed
