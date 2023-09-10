@@ -15,6 +15,9 @@ jobs:
   - checkout: self
 
   - script: |
+      # Debugging step to print the artifact staging directory
+      echo "Artifact Staging Directory: $(Build.ArtifactStagingDirectory)"
+
       # Create the Kubernetes manifest directory if it doesn't exist
       mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
 
