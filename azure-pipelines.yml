@@ -1,7 +1,5 @@
-# azure-pipelines.yml
-
 trigger:
-- main  # Adjust the branch name as needed
+- '*'
 
 pr:
 - '*'
@@ -9,56 +7,97 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  # Define your variables directly here
-  ServicePrincipalID: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'
-  ServicePrincipalKey: 'nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9'
-  TenantID: '104e77d4-81e7-4c16-ab44-935220bed6dd'
-  ACRName: 'p4s101231'
-  ACRResourceGroup: 'p4s-ACR-rg'
-  AzureClientID: '62ba6d2f-4192-4cf5-a00d-42328f7d7dfd'
-  AzureTenantID: '104e77d4-81e7-4c16-ab44-935220bed6dd'
-  AzureClientSecret: 'nJP8Q~_EqLNHRP2WxOe.b1HjVrKytOXVprvW1ca9'
-
 jobs:
-- job: BuildAndPushDockerImage
-  displayName: 'Build and Push Docker Image'
+- job: BuildAndDeploy
+  timeoutInMinutes: 20 # Increase timeout as needed
+
   steps:
   - checkout: self
 
-  - task: UseDotNet@2
+  - script: |
+      # Create the Kubernetes manifest directory if it doesn't exist
+      mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
+
+      # Remove old Kubernetes manifest files (keep the latest 5)
+      Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
+
+      # Create a Kubernetes Secret for the ACR login information
+      kubectl create secret docker-registry acr-secret \
+        --docker-server=p4s101231.azurecr.io \
+        --docker-username=p4s101231 \
+        --docker-password=dbYXfujVc4QTvWzX4T0ShgQUp7PHNk08bDtkiMbJdC+ACRC6h3Q1
+
+      # Generate the Kubernetes manifest files with a unique identifier based on the build number
+      # Dev Manifest
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: dev
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_dev_database_connection_string"
+            imagePullSecrets:
+              - name: acr-secret
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: dev
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
+
+      # Other manifest files (test, prod) can be added similarly
+
+    displayName: 'Create Kubernetes Manifests'
+
+  - task: PublishPipelineArtifact@1
     inputs:
-      packageType: 'sdk'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
-      installationScript: 'install'
+      targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
+      artifact: 'kubernetes-manifest'
 
-  - script: |
-      # Change working directory to 01-Dockerfile
-      cd 01-Dockerfile
-
-      # Build .NET application in the 01-Dockerfile directory
-      dotnet build
-    displayName: 'Build .NET Application'
-
-  - script: |
-      # Change working directory to 01-Dockerfile
-      cd 01-Dockerfile
-
-      # Authenticate with Azure Container Registry (ACR) using the service connection
-      az acr login --name $(ACRName) --username $(ServicePrincipalID) --password $(ServicePrincipalKey)
-
-      # Build and push Docker image to ACR
-      docker build -t $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId) -f Dockerfile .
-      docker push $(ACRName).azurecr.io/p4s-k8s-image:$(Build.BuildId)
-
-      # Set Azure AD application details as environment variables
-      echo "AZURE_CLIENT_ID=$(AzureClientID)" >> $(HOME)/.bashrc
-      echo "AZURE_TENANT_ID=$(AzureTenantID)" >> $(HOME)/.bashrc
-      echo "AZURE_CLIENT_SECRET=$(AzureClientSecret)" >> $(HOME)/.bashrc
+  - task: Docker@2
     displayName: 'Build and Push Docker Image'
-
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifact'
     inputs:
-      PathtoPublish: '$(Build.SourcesDirectory)/01-Dockerfile' # You can change this path as needed
-      ArtifactName: 'docker-artifact' # Customize the artifact name
+      containerRegistry: 'Your-ACR-Service-Connection' # Replace with your ACR service connection
+      repository: 'p4s-k8s-image'
+      command: 'buildAndPush'
+      Dockerfile: '**/Dockerfile'
+      tags: |
+        latest
+        $(Build.BuildNumber)
+
+  - task: Kubernetes@1
+    displayName: 'Kubectl apply'
+    inputs:
+      connectionType: 'Kubernetes Service Connection'
+      kubernetesServiceEndpoint: 'Your-Kubernetes-Service-Connection' # Replace with your Kubernetes service connection
+      namespace: 'dev'
+      command: 'apply'
+      arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml'
