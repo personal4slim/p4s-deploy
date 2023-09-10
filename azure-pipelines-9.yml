@@ -187,5 +187,4 @@ jobs:
         connectionType: 'Kubernetes Service Connection'
         kubernetesServiceEndpoint: 'Prod-Kube-Connection'  # Use the correct service connection name for prod
         namespace: 'prod'
-    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
-    displayName: 'Deploy to Prod'
+    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build
