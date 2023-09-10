@@ -21,135 +21,61 @@ jobs:
       # Remove old Kubernetes manifest files (keep the latest 5)
       Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
 
-      # Generate the Kubernetes manifest files with a unique identifier based on the build number
-      # Dev Manifest
-      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: my-app
-        namespace: dev
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app: my-app
-        template:
-          metadata:
-            labels:
-              app: my-app
-          spec:
-            containers:
-              - name: my-app
-                image: p4s101231.azurecr.io/p4s-k8s-image:latest
-                ports:
-                  - containerPort: 8080
-                env:
-                  - name: ASPNETCORE_ENVIRONMENT
-                    value: Production
-                  - name: CONNECTION_STRING
-                    value: "your_dev_database_connection_string"
-      ---
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: my-app-service
-        namespace: dev
-      spec:
-        selector:
-          app: my-app
-        ports:
-          - protocol: TCP
-            port: 80
-            targetPort: 8080
-        type: LoadBalancer
-      EOF
+      # Function to generate Kubernetes manifest files
+      function GenerateManifest {
+        local env="$1"
+        local replicas="$2"
+        local connection_string="$3"
 
-      # Test Manifest
-      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: my-app
-        namespace: test
-      spec:
-        replicas: 3
-        selector:
-          matchLabels:
-            app: my-app
-        template:
-          metadata:
-            labels:
+        cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/${env}-manifest-$(Build.BuildNumber).yaml
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: my-app
+          namespace: $env
+        spec:
+          replicas: $replicas
+          selector:
+            matchLabels:
               app: my-app
-          spec:
-            containers:
-              - name: my-app
-                image: p4s101231.azurecr.io/p4s-k8s-image:latest
-                ports:
-                  - containerPort: 8080
-                env:
-                  - name: ASPNETCORE_ENVIRONMENT
-                    value: Production
-                  - name: CONNECTION_STRING
-                    value: "your_test_database_connection_string"
-      ---
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: my-app-service
-        namespace: test
-      spec:
-        selector:
-          app: my-app
-        ports:
-          - protocol: TCP
-            port: 80
-            targetPort: 8080
-        type: LoadBalancer
-      EOF
+          template:
+            metadata:
+              labels:
+                app: my-app
+            spec:
+              containers:
+                - name: my-app
+                  image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                  ports:
+                    - containerPort: 8080
+                  env:
+                    - name: ASPNETCORE_ENVIRONMENT
+                      value: Production
+                    - name: CONNECTION_STRING
+                      value: "$connection_string"
+              imagePullSecrets:
+                - name: acr-secret
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: my-app-service
+          namespace: $env
+        spec:
+          selector:
+            app: my-app
+          ports:
+            - protocol: TCP
+              port: 80
+              targetPort: 8080
+          type: LoadBalancer
+        EOF
+      }
 
-      # Prod Manifest
-      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: my-app
-        namespace: prod
-      spec:
-        replicas: 5
-        selector:
-          matchLabels:
-            app: my-app
-        template:
-          metadata:
-            labels:
-              app: my-app
-          spec:
-            containers:
-              - name: my-app
-                image: p4s101231.azurecr.io/p4s-k8s-image:latest
-                ports:
-                  - containerPort: 8080
-                env:
-                  - name: ASPNETCORE_ENVIRONMENT
-                    value: Production
-                  - name: CONNECTION_STRING
-                    value: "your_prod_database_connection_string"
-      ---
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: my-app-service
-        namespace: prod
-      spec:
-        selector:
-          app: my-app
-        ports:
-          - protocol: TCP
-            port: 80
-            targetPort: 8080
-        type: LoadBalancer
-      EOF
+      # Generate manifests for each environment
+      GenerateManifest "dev" 1 "your_dev_database_connection_string"
+      GenerateManifest "test" 3 "your_test_database_connection_string"
+      GenerateManifest "prod" 5 "your_prod_database_connection_string"
 
     displayName: 'Create Kubernetes Manifests'
 
