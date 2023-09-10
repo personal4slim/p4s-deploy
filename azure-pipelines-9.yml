@@ -7,93 +7,153 @@ pr:
 pool:
   vmImage: 'ubuntu-latest'
 
-stages:
-- stage: DeployToDev
-  jobs:
-  - job: DeployDev
-    timeoutInMinutes: 20 # Increased timeout to 20 minutes
+jobs:
+- job: createManifests
+  timeoutInMinutes: 20 # Increased timeout to 20 minutes
 
-    steps:
-    - checkout: self
+  steps:
+  - checkout: self
 
-    - script: |
-        # Create the Kubernetes manifest directory if it doesn't exist
-        mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
+  - script: |
+      # Create the Kubernetes manifest directory if it doesn't exist
+      mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
 
-        # Remove old Kubernetes manifest files (keep the latest 5)
-        Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
+      # Remove old Kubernetes manifest files (keep the latest 5)
+      Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
 
-        # Generate the Kubernetes manifest files with a unique identifier based on the build number
-        |
-          cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
-          # ... (Your dev manifest content)
-          EOF
-      displayName: 'Create Kubernetes Manifest'
+      # Generate the Kubernetes manifest files with a unique identifier based on the build number
+      # Dev Manifest
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: dev
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_dev_database_connection_string"
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: dev
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
 
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
-        artifact: 'kubernetes-manifest'
+      # Test Manifest
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: test
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_test_database_connection_string"
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: test
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
 
-    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
-      displayName: 'Deploy to Dev'
+      # Prod Manifest
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: prod
+      spec:
+        replicas: 5
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_prod_database_connection_string"
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: prod
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
 
-- stage: DeployToTest
-  jobs:
-  - job: DeployTest
-    timeoutInMinutes: 20 # Increased timeout to 20 minutes
+    displayName: 'Create Kubernetes Manifests'
 
-    steps:
-    - checkout: self
-
-    - script: |
-        # Create the Kubernetes manifest directory if it doesn't exist
-        mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
-
-        # Remove old Kubernetes manifest files (keep the latest 5)
-        Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
-
-        # Generate the Kubernetes manifest files with a unique identifier based on the build number
-        |
-          cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
-          # ... (Your test manifest content)
-          EOF
-      displayName: 'Create Kubernetes Manifest'
-
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
-        artifact: 'kubernetes-manifest'
-
-    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
-      displayName: 'Deploy to Test'
-
-- stage: DeployToProd
-  jobs:
-  - job: DeployProd
-    timeoutInMinutes: 20 # Increased timeout to 20 minutes
-
-    steps:
-    - checkout: self
-
-    - script: |
-        # Create the Kubernetes manifest directory if it doesn't exist
-        mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
-
-        # Remove old Kubernetes manifest files (keep the latest 5)
-        Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
-
-        # Generate the Kubernetes manifest files with a unique identifier based on the build number
-        |
-          cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
-          # ... (Your prod manifest content)
-          EOF
-      displayName: 'Create Kubernetes Manifest'
-
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
-        artifact: 'kubernetes-manifest'
-
-    - script: kubectl apply -f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
-      displayName: 'Deploy to Prod'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
+      artifact: 'kubernetes-manifest'
