@@ -97,7 +97,7 @@ jobs:
     displayName: 'Kubectl apply'
     inputs:
       connectionType: 'Kubernetes Service Connection'
-      kubernetesServiceEndpoint: 'Your-Kubernetes-Service-Connection' # Replace with your Kubernetes service connection
+      kubernetesServiceEndpoint: 'dev-aks-p4s' # Replace with your Kubernetes service connection
       namespace: 'dev'
       command: 'apply'
       arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml'
