@@ -25,20 +25,17 @@ jobs:
       artifact_tag="dev"  # Modify this tag as needed
 
       # Create the artifact directory
-      artifact_dir="$(Build.ArtifactStagingDirectory)/terraform-artifact-$timestamp-$artifact_tag"
+      artifact_dir="$(Build.ArtifactStagingDirectory)/$(artifact_tag)"
       mkdir -p $artifact_dir
       
       # Copy the Terraform configurations to the artifact directory
       cp -r $terraform_folder/* $artifact_dir
 
-      # Archive the artifact directory
-      tar -czf $(Build.ArtifactStagingDirectory)/terraform-artifact-$timestamp-$artifact_tag.tar.gz -C $artifact_dir .
-
       # Publish the artifact
-      echo "##vso[artifact.upload containerfolder=terraform-artifacts;artifactname=terraform-artifact-$artifact_tag]$(Build.ArtifactStagingDirectory)/terraform-artifact-$timestamp-$artifact_tag.tar.gz"
+      echo "##vso[artifact.upload containerfolder=$(artifact_tag);artifactname=$(artifact_tag)]$(artifact_dir)"
     displayName: 'Create Terraform Artifact'
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)/terraform-artifact'
-      artifact: 'terraform-artifact-$artifact_tag'  # Add the tag to the artifact name
+      targetPath: '$(Build.ArtifactStagingDirectory)'
+      artifact: '$(artifact_tag)'  # Use the tag as the artifact name
