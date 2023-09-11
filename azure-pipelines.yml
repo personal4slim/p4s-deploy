@@ -203,3 +203,12 @@ jobs:
       namespace: 'test'
       command: 'apply'
       arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml'
+
+  - task: Kubernetes@1
+    displayName: 'Kubectl apply to Prod'
+    inputs:
+      connectionType: 'Kubernetes Service Connection'
+      kubernetesServiceEndpoint: 'prod-aks-p4s' # Replace with your Kubernetes service connection for prod
+      namespace: 'prod'
+      command: 'apply'
+      arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml'
