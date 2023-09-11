@@ -76,7 +76,95 @@ jobs:
         type: LoadBalancer
       EOF
 
-      # Other manifest files (test, prod) can be added similarly
+      # Test Manifest
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: test
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_test_database_connection_string"
+            imagePullSecrets:
+              - name: acr-secret
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: test
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
+
+      # Prod Manifest
+      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: my-app
+        namespace: prod
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: my-app
+        template:
+          metadata:
+            labels:
+              app: my-app
+          spec:
+            containers:
+              - name: my-app
+                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                ports:
+                  - containerPort: 8080
+                env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: Production
+                  - name: CONNECTION_STRING
+                    value: "your_prod_database_connection_string"
+            imagePullSecrets:
+              - name: acr-secret
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: my-app-service
+        namespace: prod
+      spec:
+        selector:
+          app: my-app
+        ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 8080
+        type: LoadBalancer
+      EOF
 
     displayName: 'Create Kubernetes Manifests'
 
@@ -97,10 +185,28 @@ jobs:
         $(Build.BuildNumber)
 
   - task: Kubernetes@1
-    displayName: 'Kubectl apply'
+    displayName: 'Kubectl apply to Dev'
     inputs:
       connectionType: 'Kubernetes Service Connection'
       kubernetesServiceEndpoint: 'dev-aks-p4s' # Replace with your Kubernetes service connection
       namespace: 'dev'
       command: 'apply'
       arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml'
+
+  - task: Kubernetes@1
+    displayName: 'Kubectl apply to Test'
+    inputs:
+      connectionType: 'Kubernetes Service Connection'
+      kubernetesServiceEndpoint: 'test-aks-p4s' # Replace with your Kubernetes service connection for test
+      namespace: 'test'
+      command: 'apply'
+      arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml'
+
+  - task: Kubernetes@1
+    displayName: 'Kubectl apply to Prod'
+    inputs:
+      connectionType: 'Kubernetes Service Connection'
+      kubernetesServiceEndpoint: 'prod-aks-p4s' # Replace with your Kubernetes service connection for prod
+      namespace: 'prod'
+      command: 'apply'
+      arguments: '-f $(Build.ArtifactStagingDirectory)/
