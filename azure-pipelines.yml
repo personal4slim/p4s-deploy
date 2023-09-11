@@ -36,6 +36,7 @@ jobs:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
+        name: my-app
         app: my-app
         namespace: dev
         labels:
