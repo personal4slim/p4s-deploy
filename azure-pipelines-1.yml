@@ -18,24 +18,19 @@ jobs:
       # Define the folder containing your Terraform configurations
       terraform_folder="smalldeploy"
 
-      # Create a timestamp for the artifact directory
-      timestamp=$(date +'%Y%m%d%H%M%S')
-
       # Define a tag for the artifact (e.g., "dev" or "prod")
       artifact_tag="dev"  # Modify this tag as needed
 
+      # Create a timestamp for the artifact directory
+      timestamp=$(date +'%Y%m%d%H%M%S')
+
       # Create the artifact directory
-      artifact_dir="$(Build.ArtifactStagingDirectory)/$(artifact_tag)"
+      artifact_dir="$(Build.ArtifactStagingDirectory)/$(artifact_tag)-$(timestamp)"
       mkdir -p $artifact_dir
       
       # Copy the Terraform configurations to the artifact directory
       cp -r $terraform_folder/* $artifact_dir
 
       # Publish the artifact
-      echo "##vso[artifact.upload containerfolder=$(artifact_tag);artifactname=$(artifact_tag)]$(artifact_dir)"
+      echo "##vso[artifact.upload containerfolder=$(artifact_tag);artifactname=$(artifact_tag)-$(timestamp)]$(artifact_dir)"
     displayName: 'Create Terraform Artifact'
-
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)'
-      artifact: '$(artifact_tag)'  # Use the tag as the artifact name
