@@ -12,25 +12,29 @@ jobs:
   displayName: 'Build Terraform Artifact'
   
   steps:
-  - checkout: self
+  - checkout: none  # Do not checkout the source code repository
 
   - script: |
-      # Define the folder containing your Terraform configurations
-      terraform_folder="smalldeploy"
+      # Define the GitHub repository and folder path
+      github_repo="personal4slim/p4s-deploy"
+      folder_path="smalldeploy"
 
-      # Define a tag for the artifact (e.g., "dev" or "prod")
-      artifact_tag="dev"  # Modify this tag as needed
+      # Create a GitHub Personal Access Token (PAT) with 'repo' and 'workflow' scopes and store it as a secret in Azure DevOps.
 
-      # Create a timestamp for the artifact directory
-      timestamp=$(date +'%Y%m%d%H%M%S')
+      # Fetch the contents of the folder using curl and the GitHub API
+      curl -sL -H "Authorization: token $(PAT)" -o temp.zip \
+        "https://api.github.com/repos/$github_repo/zipball/master/$folder_path"
 
-      # Create the artifact directory
-      artifact_dir="$(Build.ArtifactStagingDirectory)/$(artifact_tag)-$(timestamp)"
-      mkdir -p $artifact_dir
-      
-      # Copy the Terraform configurations to the artifact directory
-      cp -r $terraform_folder/* $artifact_dir
+      # Unzip the downloaded contents to the artifact directory
+      unzip -q temp.zip -d "$(Build.ArtifactStagingDirectory)/$folder_path"
 
-      # Publish the artifact
-      echo "##vso[artifact.upload containerfolder=$(artifact_tag);artifactname=$(artifact_tag)-$(timestamp)]$(artifact_dir)"
+      # Clean up the temporary zip file
+      rm temp.zip
+    env:
+      PAT: $(GitHubPAT)  # Replace with the name of the Azure DevOps secret containing your GitHub PAT
     displayName: 'Create Terraform Artifact'
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/smalldeploy'
+      artifact: 'TerraformArtifact'
