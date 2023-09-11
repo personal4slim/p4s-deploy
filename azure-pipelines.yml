@@ -37,7 +37,6 @@ jobs:
       kind: Deployment
       metadata:
         name: my-app
-        app: my-app
         namespace: dev
         labels:
           app: my-app
