@@ -12,28 +12,17 @@ jobs:
   displayName: 'Build Terraform Artifact'
   
   steps:
-  - checkout: none  # Do not checkout the source code repository
+  - checkout: self
 
   - script: |
-      # Define the GitHub repository and folder path
-      github_repo="personal4slim/p4s-deploy"  # Replace with your GitHub username and repository
+      # Define the folder path you want to include in the artifact
       folder_path="smalldeploy"
 
-      # Fetch the contents of the folder using curl and the GitHub API
-      curl -sL -o temp.zip \
-        "https://github.com/$github_repo/archive/master.zip"
-
-      # Unzip the downloaded contents to the artifact directory
-      unzip -q temp.zip -d "$(Build.ArtifactStagingDirectory)"
-
-      # Rename the unzipped folder to match your desired folder name
-      mv "$(Build.ArtifactStagingDirectory)/$github_repo-master" "$folder_path"
-
-      # Clean up the temporary zip file
-      rm temp.zip
+      # Copy the contents of the folder to the artifact staging directory
+      cp -R "$folder_path" "$(Build.ArtifactStagingDirectory)"
     displayName: 'Create Terraform Artifact'
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: '$(Build.ArtifactStagingDirectory)/smalldeploy'
+      targetPath: '$(Build.ArtifactStagingDirectory)'
       artifact: 'TerraformArtifact'
