@@ -4,24 +4,24 @@ resource "azurerm_kubernetes_cluster_node_pool" "lin101" {
   vm_size               = "Standard_DS2_v2"
   os_type               = "Linux"
   os_disk_size_gb       = 35
-  mode                  = "System"  # Use "System" mode for system node pools
+  mode                  = "System"
 
   enable_auto_scaling = true
-  max_count           = 3
+  max_count           = 5  # Adjust based on your scalability needs
   min_count           = 1
 
   node_labels = {
     "nodepool-type"  = "user"
-    "environment"    = "dev"  # Corrected the typo in "environment"
+    "environment"    = "dev"
     "nodepoolos"     = "linux"
-    "app"            = "java-apps"
+    "app"            = "dotnet-app"
   }
 
   tags = {
     "nodepool-type"  = "user"
     "environment"    = "dev"
     "nodepools"      = "linux"
-    "app"            = "java-apps"
+    "app"            = "dotnet-app"
   }
 
   priority = "Regular"
