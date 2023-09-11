@@ -16,22 +16,21 @@ jobs:
 
   - script: |
       # Define the GitHub repository and folder path
-      github_repo="personal4slim/p4s-deploy"
+      github_repo="personal4slim/p4s-deploy"  # Replace with your GitHub username and repository
       folder_path="smalldeploy"
 
-      # Create a GitHub Personal Access Token (PAT) with 'repo' and 'workflow' scopes and store it as a secret in Azure DevOps.
-
       # Fetch the contents of the folder using curl and the GitHub API
-      curl -sL -H "Authorization: token $(PAT)" -o temp.zip \
-        "https://api.github.com/repos/$github_repo/zipball/master/$folder_path"
+      curl -sL -o temp.zip \
+        "https://github.com/$github_repo/archive/master.zip"
 
       # Unzip the downloaded contents to the artifact directory
-      unzip -q temp.zip -d "$(Build.ArtifactStagingDirectory)/$folder_path"
+      unzip -q temp.zip -d "$(Build.ArtifactStagingDirectory)"
+
+      # Rename the unzipped folder to match your desired folder name
+      mv "$(Build.ArtifactStagingDirectory)/$github_repo-master" "$folder_path"
 
       # Clean up the temporary zip file
       rm temp.zip
-    env:
-      PAT: $(GitHubPAT)  # Replace with the name of the Azure DevOps secret containing your GitHub PAT
     displayName: 'Create Terraform Artifact'
 
   - task: PublishPipelineArtifact@1
