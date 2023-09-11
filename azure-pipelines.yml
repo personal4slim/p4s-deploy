@@ -74,7 +74,7 @@ jobs:
             port: 80
             targetPort: 8080
         type: LoadBalancer
-EOF
+      EOF
 
       # Test Manifest
       cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml
@@ -119,7 +119,7 @@ EOF
             port: 80
             targetPort: 8080
         type: LoadBalancer
-EOF
+      EOF
 
       # Prod Manifest
       cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/prod-manifest-$(Build.BuildNumber).yaml
@@ -164,7 +164,7 @@ EOF
             port: 80
             targetPort: 8080
         type: LoadBalancer
-EOF
+      EOF
 
     displayName: 'Create Kubernetes Manifests'
 
@@ -198,4 +198,6 @@ EOF
     inputs:
       connectionType: 'Kubernetes Service Connection'
       kubernetesServiceEndpoint: 'test-aks-p4s' # Replace with your Kubernetes service connection for test
-     
+      namespace: 'test'
+      command: 'apply'
+      arguments: '-f $(Build.ArtifactStagingDirectory)/kubernetes-manifest/test-manifest-$(Build.BuildNumber).yaml'
