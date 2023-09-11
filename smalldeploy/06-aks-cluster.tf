@@ -42,7 +42,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "win231" {
   name                  = "win231"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
   vm_size               = "Standard_DS2_v2"
-  os_type               = "linux"
+  os_type               = "Linux"
   os_disk_size_gb       = 35
   mode                  = "User"
 
