@@ -8,57 +8,37 @@ pool:
   vmImage: 'ubuntu-latest'
 
 jobs:
-- job: deploy
+- job: BuildTerraformArtifact
+  displayName: 'Build Terraform Artifact'
+  
   steps:
   - checkout: self
 
   - script: |
-      # Create the Kubernetes manifest directory if it doesn't exist
-      mkdir -p $(Build.ArtifactStagingDirectory)/kubernetes-manifest
+      # Define the folder containing your Terraform configurations
+      terraform_folder="smalldeploy"
 
-      # Generate the Kubernetes manifest file
-      cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/kubernetes-manifest.yaml
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: my-app
-      spec:
-        replicas: 3
-        selector:
-          matchLabels:
-            app: my-app
-        template:
-          metadata:
-            labels:
-              app: my-app
-          spec:
-            containers:
-              - name: my-app
-                image: p4s-k8s-image
-                ports:
-                  - containerPort: 8080
-                env:
-                  - name: ASPNETCORE_ENVIRONMENT
-                    value: Production
-                  - name: CONNECTION_STRING
-                    value: "your_database_connection_string"
-      ---
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: my-app-service
-      spec:
-        selector:
-          app: my-app
-        ports:
-          - protocol: TCP
-            port: 80
-            targetPort: 8080
-        type: LoadBalancer
-      EOF
-    displayName: 'Create Kubernetes Manifest'
+      # Create a timestamp for the artifact directory
+      timestamp=$(date +'%Y%m%d%H%M%S')
+
+      # Define a tag for the artifact (e.g., "dev" or "prod")
+      artifact_tag="dev"  # Modify this tag as needed
+
+      # Create the artifact directory
+      artifact_dir="$(Build.ArtifactStagingDirectory)/terraform-artifact-$timestamp-$artifact_tag"
+      mkdir -p $artifact_dir
+      
+      # Copy the Terraform configurations to the artifact directory
+      cp -r $terraform_folder/* $artifact_dir
+
+      # Archive the artifact directory
+      tar -czf $(Build.ArtifactStagingDirectory)/terraform-artifact-$timestamp-$artifact_tag.tar.gz -C $artifact_dir .
+
+      # Publish the artifact
+      echo "##vso[artifact.upload containerfolder=terraform-artifacts;artifactname=terraform-artifact-$artifact_tag]$(Build.ArtifactStagingDirectory)/terraform-artifact-$timestamp-$artifact_tag.tar.gz"
+    displayName: 'Create Terraform Artifact'
 
   - task: PublishPipelineArtifact@1
     inputs:
-      targetPath: 'C:\Users\Consultant\p4s-deploy'
-      artifact: 'kubernetes-manifest'
+      targetPath: '$(Build.ArtifactStagingDirectory)/terraform-artifact'
+      artifact: 'terraform-artifact-$artifact_tag'  # Add the tag to the artifact name
