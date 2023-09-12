@@ -1,95 +1,47 @@
-resource "azurerm_lb" "dev" {
-  name                = "my-app-service-dev-lb"
+resource "azurerm_kubernetes_cluster" "aks_cluster" {
+  name                = "${azurerm_resource_group.aks_rg.name}-cluster"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
+  dns_prefix          = "${azurerm_resource_group.aks_rg.name}-cluster"
+  kubernetes_version  = data.azurerm_kubernetes_service_versions.current.latest_version
+  node_resource_group = "${azurerm_resource_group.aks_rg.name}-nrg"
 
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.dev.id
+  default_node_pool {
+    name                = "p4spool"
+    node_count          = 1
+    vm_size             = "Standard_D2_v2"
+    orchestrator_version = data.azurerm_kubernetes_service_versions.current.latest_version
+    enable_auto_scaling = true
+    max_count           = 3
+    min_count           = 1
+    os_disk_size_gb     = 30
+    type                = "VirtualMachineScaleSets"
+
+    load_balancer_sku = "Standard"  # You can adjust this based on your requirements
+    outbound_type     = "loadBalancer"
   }
 
-  backend_address_pool {
-    name = "backendPool1"
+  identity {
+    type = "SystemAssigned"
   }
 
-  probe {
-    name         = "httpProbe"
-    protocol     = "Http"
-    request_path = "/"
-    port         = 80
+  # Role Based Access Control
+  azure_active_directory_role_based_access_control {
+    managed              = true
+    admin_group_object_ids = ["002fae4f-5ba5-47f1-800a-70d428de60b7"]
   }
 
-  load_balancing_rule {
-    name                       = "webRule"
-    frontend_ip_configuration_id = azurerm_lb.dev.frontend_ip_configuration[0].id
-    backend_address_pool_id      = azurerm_lb.dev.backend_address_pool[0].id
-    probe_id                    = azurerm_lb.dev.probe[0].id
-    protocol                    = "Tcp"
-    frontend_port               = 80
-    backend_port                = 80
-  }
-}
+  network_profile {
+    network_plugin = "azure"  # Use the "azure" network plugin for Windows agent pool
 
-resource "azurerm_lb" "test" {
-  name                = "my-app-service-test-lb"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.test.id
+    load_balancer_profile {
+      managed_outbound_ip_count = 1  # You can adjust this based on your requirements
+      outbound_ip_prefix_ids    = [azurerm_public_ip.dev.id, azurerm_public_ip.test.id, azurerm_public_ip.prod.id]
+    }
   }
 
-  backend_address_pool {
-    name = "backendPool1"
-  }
-
-  probe {
-    name         = "httpProbe"
-    protocol     = "Http"
-    request_path = "/"
-    port         = 80
-  }
-
-  load_balancing_rule {
-    name                       = "webRule"
-    frontend_ip_configuration_id = azurerm_lb.test.frontend_ip_configuration[0].id
-    backend_address_pool_id      = azurerm_lb.test.backend_address_pool[0].id
-    probe_id                    = azurerm_lb.test.probe[0].id
-    protocol                    = "Tcp"
-    frontend_port               = 80
-    backend_port                = 80
-  }
-}
-
-resource "azurerm_lb" "prod" {
-  name                = "my-app-service-prod-lb"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.prod.id
-  }
-
-  backend_address_pool {
-    name = "backendPool1"
-  }
-
-  probe {
-    name         = "httpProbe"
-    protocol     = "Http"
-    request_path = "/"
-    port         = 80
-  }
-
-  load_balancing_rule {
-    name                       = "webRule"
-    frontend_ip_configuration_id = azurerm_lb.prod.frontend_ip_configuration[0].id
-    backend_address_pool_id      = azurerm_lb.prod.backend_address_pool[0].id
-    probe_id                    = azurerm_lb.prod.probe[0].id
-    protocol                    = "Tcp"
-    frontend_port               = 80
-    backend_port                = 80
+  windows_profile {
+    admin_username = "personal4slim"
+    admin_password = "Oluwaseun_101#"
   }
 }
