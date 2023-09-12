@@ -66,3 +66,5 @@ resource "azurerm_kubernetes_cluster_node_pool" "win231" {
 
   priority = "Regular"
 }
+  priority = "Regular"
+}
