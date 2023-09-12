@@ -1,97 +1,47 @@
-# Define a managed public IP address for dev environment
-resource "azurerm_public_ip" "dev" {
-  name                = "my-app-service-dev-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
-
-# Define a managed public IP address for test environment
-resource "azurerm_public_ip" "test" {
-  name                = "my-app-service-test-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
-
-# Define a managed public IP address for prod environment
-resource "azurerm_public_ip" "prod" {
-  name                = "my-app-service-prod-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
-
-# Define Load Balancer resources for dev, test, and prod environments
-resource "azurerm_lb" "dev" {
-  name                = "my-app-service-dev-lb"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.dev.id
-  }
-
-  # ... (other LB configuration settings)
-}
-
-resource "azurerm_lb" "test" {
-  name                = "my-app-service-test-lb"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.test.id
-  }
-
-  # ... (other LB configuration settings)
-}
-
-resource "azurerm_lb" "prod" {
-  name                = "my-app-service-prod-lb"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = azurerm_public_ip.prod.id
-  }
-
-  # ... (other LB configuration settings)
-}
-
-# Define Kubernetes Cluster
 resource "azurerm_kubernetes_cluster" "aks_cluster" {
-  name                = "my-aks-cluster"
+  name                = "${azurerm_resource_group.aks_rg.name}-cluster"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
-  dns_prefix          = "myakscluster"
+  dns_prefix          = "${azurerm_resource_group.aks_rg.name}-cluster"
+  kubernetes_version  = data.azurerm_kubernetes_service_versions.current.latest_version
+  node_resource_group = "${azurerm_resource_group.aks_rg.name}-nrg"
 
   default_node_pool {
-    name       = "default"
-    node_count = 1
-    vm_size    = "Standard_D2_v2"
+    name                = "p4spool"
+    node_count          = 1
+    vm_size             = "Standard_D2_v2"
+    orchestrator_version = data.azurerm_kubernetes_service_versions.current.latest_version
+    enable_auto_scaling = true
+    max_count           = 3
+    min_count           = 1
+    os_disk_size_gb     = 30
+    type                = "VirtualMachineScaleSets"
+
+    load_balancer_sku = "Standard"  # You can adjust this based on your requirements
+    outbound_type     = "loadBalancer"
   }
 
-  service_principal {
-    client_id     = azurerm_kubernetes_cluster_sp.aks_sp.application_id
-    client_secret = azurerm_kubernetes_cluster_sp.aks_sp.password
+  identity {
+    type = "SystemAssigned"
+  }
+
+  # Role Based Access Control
+  azure_active_directory_role_based_access_control {
+    managed              = true
+    admin_group_object_ids = ["002fae4f-5ba5-47f1-800a-70d428de60b7"]
   }
 
   network_profile {
+    network_plugin = "azure"  # Use the "azure" network plugin for Windows agent pool
+
     load_balancer_profile {
-      managed_outbound_ip_count = 1
-      outbound_ip_prefix_ids = [
-        azurerm_public_ip.dev.id,
-        azurerm_public_ip.test.id,
-        azurerm_public_ip.prod.id
-      ]
+      managed_outbound_ip_count = 1  # You can adjust this based on your requirements
+      outbound_ip_prefix_ids    = [azurerm_public_ip.dev.id, azurerm_public_ip.test.id, azurerm_public_ip.prod.id]
     }
   }
 
-  tags = {
-    environment = "Development"
+  windows_profile {
+    admin_username = "personal4slim"
+    admin_password = "Oluwaseun_101#"
   }
 }
