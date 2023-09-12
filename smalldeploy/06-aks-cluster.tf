@@ -1,14 +1,14 @@
-# Define the Azure Kubernetes Cluster
 resource "azurerm_kubernetes_cluster" "aks_cluster" {
   name                = "my-aks-cluster"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
   dns_prefix          = "myakscluster"
+  kubernetes_version  = "1.21.2"
 
   default_node_pool {
     name       = "default"
     node_count = 1
-    vm_size    = "Standard_D2_v2"
+    vm_size    = "Standard_DS2_v2"
   }
 
   identity {
@@ -21,8 +21,13 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
   addon_profile {
+    kube_dashboard {
+      enabled = true
+    }
+
     oms_agent {
-      enabled                    = false
+      enabled = true
+      log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id
     }
   }
 
@@ -31,35 +36,13 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 
   tags = {
-    environment = "Dev"
+    Environment = "Dev"
   }
-
-  # Reference to the outbound IP prefixes from the load balancers
-  outbound_ip_prefix_ids = [
-    azurerm_public_ip.dev.id,
-    azurerm_public_ip.test.id,
-    azurerm_public_ip.prod.id
-  ]
 }
 
-# Define managed public IP addresses for dev, test, and prod environments
-resource "azurerm_public_ip" "dev" {
-  name                = "my-app-service-dev-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
+data "azurerm_log_analytics_workspace" "example" {
+  name                = "example"
   resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
 }
 
-resource "azurerm_public_ip" "test" {
-  name                = "my-app-service-test-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
-
-resource "azurerm_public_ip" "prod" {
-  name                = "my-app-service-prod-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
+# Other resources related to your AKS cluster
