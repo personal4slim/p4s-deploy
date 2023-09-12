@@ -24,12 +24,6 @@ jobs:
       # Remove old Kubernetes manifest files (keep the latest 5)
       Get-ChildItem -Path $(Build.ArtifactStagingDirectory)/kubernetes-manifest -File | Sort-Object LastWriteTime -Descending | Select-Object -Skip 5 | Remove-Item -Force
 
-      # Create a Kubernetes Secret for the ACR login information
-      kubectl create secret docker-registry acr-secret \
-        --docker-server=p4s101231.azurecr.io \
-        --docker-username=p4s101231 \
-        --docker-password=dbYXfujVc4QTvWzX4T0ShgQUp7PHNk08bDtkiMbJdC+ACRC6h3Q1
-
       # Generate the Kubernetes manifest files with a unique identifier based on the build number
       # Dev Manifest
       cat <<EOF > $(Build.ArtifactStagingDirectory)/kubernetes-manifest/dev-manifest-$(Build.BuildNumber).yaml
@@ -52,7 +46,7 @@ jobs:
           spec:
             containers:
               - name: my-app
-                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                image: personal4slim/web-image-p4s:latest # Pull from Docker Hub
                 ports:
                   - containerPort: 8080
                 env:
@@ -60,8 +54,6 @@ jobs:
                     value: Production
                   - name: CONNECTION_STRING
                     value: "your_dev_database_connection_string"
-            imagePullSecrets:
-              - name: acr-secret
       ---
       apiVersion: v1
       kind: Service
@@ -97,7 +89,7 @@ jobs:
           spec:
             containers:
               - name: my-app
-                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                image: personal4slim/web-image-p4s:latest # Pull from Docker Hub
                 ports:
                   - containerPort: 8080
                 env:
@@ -105,8 +97,6 @@ jobs:
                     value: Production
                   - name: CONNECTION_STRING
                     value: "your_test_database_connection_string"
-            imagePullSecrets:
-              - name: acr-secret
       ---
       apiVersion: v1
       kind: Service
@@ -142,7 +132,7 @@ jobs:
           spec:
             containers:
               - name: my-app
-                image: p4s101231.azurecr.io/p4s-k8s-image:latest
+                image: personal4slim/web-image-p4s:latest # Pull from Docker Hub
                 ports:
                   - containerPort: 8080
                 env:
@@ -150,8 +140,6 @@ jobs:
                     value: Production
                   - name: CONNECTION_STRING
                     value: "your_prod_database_connection_string"
-            imagePullSecrets:
-              - name: acr-secret
       ---
       apiVersion: v1
       kind: Service
@@ -174,17 +162,6 @@ jobs:
     inputs:
       targetPath: '$(Build.ArtifactStagingDirectory)/kubernetes-manifest'
       artifact: 'kubernetes-manifest'
-
-  - task: Docker@2
-    displayName: 'Build and Push Docker Image'
-    inputs:
-      containerRegistry: 'DRconnect' # Replace with your Docker Registry service connection name
-      repository: 'p4s-k8s-image'
-      command: 'buildAndPush'
-      Dockerfile: '**/Dockerfile'
-      tags: |
-        latest
-        $(Build.BuildNumber)
 
   - task: Kubernetes@1
     displayName: 'Kubectl apply to Dev'
