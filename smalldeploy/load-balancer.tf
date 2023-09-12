@@ -1,5 +1,5 @@
 resource "azurerm_lb" "dev" {
-  name                = "example-lb-dev"
+  name                = "example-lb-dev-${var.cluster_name}"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Standard"
@@ -37,7 +37,7 @@ resource "azurerm_lb" "dev" {
 }
 
 resource "azurerm_lb" "test" {
-  name                = "example-lb-test"
+  name                = "example-lb-test-${var.cluster_name}"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Standard"
@@ -75,7 +75,7 @@ resource "azurerm_lb" "test" {
 }
 
 resource "azurerm_lb" "prod" {
-  name                = "example-lb-prod"
+  name                = "example-lb-prod-${var.cluster_name}"
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Standard"
