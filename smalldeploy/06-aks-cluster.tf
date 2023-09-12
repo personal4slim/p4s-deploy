@@ -1,7 +1,7 @@
 resource "azurerm_kubernetes_cluster" "aks_cluster" {
   name                = var.cluster_name
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   dns_prefix          = var.dns_prefix
   kubernetes_version  = var.kubernetes_version
 
@@ -11,26 +11,24 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     vm_size    = var.vm_size
   }
 
-  identity {
-    type = "SystemAssigned"
+  tags = var.tags
+
+  service_principal {
+    client_id     = var.sp_client_id
+    client_secret = var.sp_client_secret
   }
 
   addon_profile {
-    aci_connector_linux {
-      enabled = false
-    }
     kube_dashboard {
       enabled = true
     }
-  }
-
-  network_profile {
-    network_plugin = "azure"
   }
 
   role_based_access_control {
     enabled = true
   }
 
-  tags = var.tags
+  network_profile {
+    network_plugin = "azure"
+  }
 }
