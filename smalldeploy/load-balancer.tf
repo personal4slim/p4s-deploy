@@ -96,3 +96,4 @@ resource "azurerm_lb_rule" "prod" {
   probe_id                  = azurerm_lb.prod.probe[0].id
   protocol                  = "Tcp"
 }
+
