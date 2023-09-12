@@ -24,29 +24,6 @@ variable "windows_admin_password" {
 
 variable "environment" {
   type        = string
-  default     = "production"
+  default     = "production" # Provide the appropriate default value
   description = "This variable defines the environment for your resources"
-}
-
-variable "node_count" {
-  type        = number
-  default     = 3
-  description = "This variable defines the number of nodes in your cluster"
-}
-
-variable "vm_size" {
-  type        = string
-  default     = "Standard_D2s_v3"
-  description = "This variable defines the VM size for your cluster nodes"
-}
-
-variable "tags" {
-  type        = map(string)
-  default     = {}
-  description = "This variable defines tags for your resources"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "Name of the AKS cluster"
 }
