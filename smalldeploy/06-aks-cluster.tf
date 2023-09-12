@@ -1,92 +1,95 @@
-resource "azurerm_kubernetes_cluster" "aks_cluster" {
-  name                = "${azurerm_resource_group.aks_rg.name}-cluster"
+resource "azurerm_lb" "dev" {
+  name                = "my-app-service-dev-lb"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
-  dns_prefix          = "${azurerm_resource_group.aks_rg.name}-cluster"
-  kubernetes_version = data.azurerm_kubernetes_service_versions.current.latest_version
-  node_resource_group = "${azurerm_resource_group.aks_rg.name}-nrg"
 
-  default_node_pool {
-    name                = "p4spool"
-    node_count          = 1
-    vm_size             = "Standard_D2_v2"
-    orchestrator_version = data.azurerm_kubernetes_service_versions.current.latest_version
-    enable_auto_scaling = true
-    max_count           = 3
-    min_count           = 1
-    os_disk_size_gb     = 30
-    type                = "VirtualMachineScaleSets"
+  frontend_ip_configuration {
+    name                 = "PublicIPAddress"
+    public_ip_address_id = azurerm_public_ip.dev.id
   }
 
-  identity {
-    type = "SystemAssigned"
+  backend_address_pool {
+    name = "backendPool1"
   }
 
-  # Role Based Access Control
-  azure_active_directory_role_based_access_control {
-    managed              = true
-    admin_group_object_ids = ["002fae4f-5ba5-47f1-800a-70d428de60b7"]
+  probe {
+    name         = "httpProbe"
+    protocol     = "Http"
+    request_path = "/"
+    port         = 80
   }
 
-  network_profile {
-    network_plugin = "azure"  # Use the "azure" network plugin for Windows agent pool
-  }
-
-  windows_profile {
-    admin_username = "personal4slim"
-    admin_password = "Oluwaseun_101#"
+  load_balancing_rule {
+    name                       = "webRule"
+    frontend_ip_configuration_id = azurerm_lb.dev.frontend_ip_configuration[0].id
+    backend_address_pool_id      = azurerm_lb.dev.backend_address_pool[0].id
+    probe_id                    = azurerm_lb.dev.probe[0].id
+    protocol                    = "Tcp"
+    frontend_port               = 80
+    backend_port                = 80
   }
 }
 
-resource "azurerm_kubernetes_cluster_node_pool" "win231" {
-  name                  = "win231"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
-  vm_size               = "Standard_DS2_v2"
-  os_type               = "Linux"
-  os_disk_size_gb       = 35
-  mode                  = "User"
+resource "azurerm_lb" "test" {
+  name                = "my-app-service-test-lb"
+  location            = azurerm_resource_group.aks_rg.location
+  resource_group_name = azurerm_resource_group.aks_rg.name
 
-  enable_auto_scaling = true
-  max_count           = 3
-  min_count           = 1
-
-  node_labels = {
-    "nodepool-type" = "user"
-    "environment"   = "dev"
-    "nodepoolos"    = "linux"
-    "app"           = "system-apps"
+  frontend_ip_configuration {
+    name                 = "PublicIPAddress"
+    public_ip_address_id = azurerm_public_ip.test.id
   }
 
-  tags = {
-    "nodepool-type" = "user"
-    "environment"   = "dev"
-    "nodepools"     = "linux"
-    "app"           = "system-apps"
+  backend_address_pool {
+    name = "backendPool1"
   }
 
-  priority = "Regular"
+  probe {
+    name         = "httpProbe"
+    protocol     = "Http"
+    request_path = "/"
+    port         = 80
+  }
+
+  load_balancing_rule {
+    name                       = "webRule"
+    frontend_ip_configuration_id = azurerm_lb.test.frontend_ip_configuration[0].id
+    backend_address_pool_id      = azurerm_lb.test.backend_address_pool[0].id
+    probe_id                    = azurerm_lb.test.probe[0].id
+    protocol                    = "Tcp"
+    frontend_port               = 80
+    backend_port                = 80
+  }
 }
 
-# Define a managed public IP address for dev environment
-resource "azurerm_public_ip" "dev" {
-  name                = "my-app-service-dev-public-ip"
+resource "azurerm_lb" "prod" {
+  name                = "my-app-service-prod-lb"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
 
-# Define a managed public IP address for test environment
-resource "azurerm_public_ip" "test" {
-  name                = "my-app-service-test-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
-}
+  frontend_ip_configuration {
+    name                 = "PublicIPAddress"
+    public_ip_address_id = azurerm_public_ip.prod.id
+  }
 
-# Define a managed public IP address for prod environment
-resource "azurerm_public_ip" "prod" {
-  name                = "my-app-service-prod-public-ip"
-  location            = azurerm_resource_group.aks_rg.location
-  resource_group_name = azurerm_resource_group.aks_rg.name
-  allocation_method   = "Dynamic"
+  backend_address_pool {
+    name = "backendPool1"
+  }
+
+  probe {
+    name         = "httpProbe"
+    protocol     = "Http"
+    request_path = "/"
+    port         = 80
+  }
+
+  load_balancing_rule {
+    name                       = "webRule"
+    frontend_ip_configuration_id = azurerm_lb.prod.frontend_ip_configuration[0].id
+    backend_address_pool_id      = azurerm_lb.prod.backend_address_pool[0].id
+    probe_id                    = azurerm_lb.prod.probe[0].id
+    protocol                    = "Tcp"
+    frontend_port               = 80
+    backend_port                = 80
+  }
 }
