@@ -3,7 +3,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
   dns_prefix          = "${azurerm_resource_group.aks_rg.name}-cluster"
-  kubernetes_version = data.azurerm_kubernetes_service_versions.current.latest_version
+  kubernetes_version  = data.azurerm_kubernetes_service_versions.current.latest_version
   node_resource_group = "${azurerm_resource_group.aks_rg.name}-nrg"
 
   default_node_pool {
@@ -36,33 +36,30 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     admin_username = "personal4slim"
     admin_password = "Oluwaseun_101#"
   }
-}
 
-resource "azurerm_kubernetes_cluster_node_pool" "win231" {
-  name                  = "win231"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
-  vm_size               = "Standard_DS2_v2"
-  os_type               = "Linux"
-  os_disk_size_gb       = 35
-  mode                  = "User"
+  node_pool {
+    name                = "win231"
+    vm_size             = "Standard_DS2_v2"
+    os_type             = "Linux"
+    os_disk_size_gb     = 35
+    enable_auto_scaling = true
+    max_count           = 3
+    min_count           = 1
 
-  enable_auto_scaling = true
-  max_count           = 3
-  min_count           = 1
+    node_labels = {
+      "nodepool-type" = "user"
+      "environment"   = "dev"
+      "nodepoolos"    = "linux"
+      "app"           = "system-apps"
+    }
 
-  node_labels = {
-    "nodepool-type" = "user"
-    "environment"   = "dev"
-    "nodepoolos"    = "linux"
-    "app"           = "system-apps"
+    tags = {
+      "nodepool-type" = "user"
+      "environment"   = "dev"
+      "nodepools"     = "linux"
+      "app"           = "system-apps"
+    }
+
+    priority = "Regular"
   }
-
-  tags = {
-    "nodepool-type" = "user"
-    "environment"   = "dev"
-    "nodepools"     = "linux"
-    "app"           = "system-apps"
-  }
-
-  priority = "Regular"
 }
