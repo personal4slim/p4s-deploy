@@ -24,6 +24,24 @@ variable "windows_admin_password" {
 
 variable "environment" {
   type        = string
-  default     = "production" # Provide the appropriate default value
+  default     = "production"
   description = "This variable defines the environment for your resources"
+}
+
+variable "node_count" {
+  type        = number
+  default     = 3  # Provide an appropriate default value
+  description = "This variable defines the number of nodes in your cluster"
+}
+
+variable "vm_size" {
+  type        = string
+  default     = "Standard_D2s_v3"  # Provide an appropriate default value
+  description = "This variable defines the VM size for your cluster nodes"
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}  # Provide an appropriate default value as a map
+  description = "This variable defines tags for your resources"
 }
