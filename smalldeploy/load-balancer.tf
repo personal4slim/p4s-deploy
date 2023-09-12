@@ -2,6 +2,7 @@ resource "azurerm_lb" "dev" {
   name                = "my-app-service-dev-lb"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
+  sku                 = "Basic"
 
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
@@ -24,6 +25,7 @@ resource "azurerm_lb" "test" {
   name                = "my-app-service-test-lb"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
+  sku                 = "Basic"
 
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
@@ -46,6 +48,7 @@ resource "azurerm_lb" "prod" {
   name                = "my-app-service-prod-lb"
   location            = azurerm_resource_group.aks_rg.location
   resource_group_name = azurerm_resource_group.aks_rg.name
+  sku                 = "Basic"
 
   frontend_ip_configuration {
     name                 = "PublicIPAddress"
@@ -70,7 +73,7 @@ resource "azurerm_lb_rule" "dev" {
   loadbalancer_id           = azurerm_lb.dev.id
   frontend_ip_configuration = azurerm_lb.dev.frontend_ip_configuration[0].name
   frontend_port             = 80
-  backend_address_pool_id    = azurerm_lb.dev.backend_address_pool[0].id
+  backend_address_pool_id   = azurerm_lb.dev.backend_address_pool[0].id
   probe_id                  = azurerm_lb.dev.probe[0].id
   protocol                  = "Tcp"
 }
@@ -81,7 +84,7 @@ resource "azurerm_lb_rule" "test" {
   loadbalancer_id           = azurerm_lb.test.id
   frontend_ip_configuration = azurerm_lb.test.frontend_ip_configuration[0].name
   frontend_port             = 80
-  backend_address_pool_id    = azurerm_lb.test.backend_address_pool[0].id
+  backend_address_pool_id   = azurerm_lb.test.backend_address_pool[0].id
   probe_id                  = azurerm_lb.test.probe[0].id
   protocol                  = "Tcp"
 }
@@ -92,9 +95,7 @@ resource "azurerm_lb_rule" "prod" {
   loadbalancer_id           = azurerm_lb.prod.id
   frontend_ip_configuration = azurerm_lb.prod.frontend_ip_configuration[0].name
   frontend_port             = 80
-  backend_address_pool_id    = azurerm_lb.prod.backend_address_pool[0].id
+  backend_address_pool_id   = azurerm_lb.prod.backend_address_pool[0].id
   probe_id                  = azurerm_lb.prod.probe[0].id
   protocol                  = "Tcp"
 }
-
-# Other resources related to your load balancer
