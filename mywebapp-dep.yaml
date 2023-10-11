@@ -1,0 +1,29 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+    addToPath: true
+
+- script: |
+    # Configure kubectl
+    echo $(kubectl configuration set-cluster my-aks-cluster --server=https://your-aks-cluster-api-server)
+    echo $(kubectl configuration set-context my-aks-context --cluster=my-aks-cluster)
+    echo $(kubectl configuration set-credentials my-aks-service-connection-token --token=your-service-connection-token)
+    echo $(kubectl configuration set-context my-aks-context --user=my-aks-service-connection-token --namespace=default)
+    echo $(kubectl config use-context my-aks-context)
+  displayName: 'Configure kubectl'
+
+- script: |
+    # Deploy to AKS
+    kubectl apply -f mywebapp-deployment.yaml
+  displayName: 'Deploy to AKS'
+
+- script: |
+    # Other deployment steps as needed
+  displayName: 'Other Deployment Steps'
